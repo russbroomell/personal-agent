@@ -33,7 +33,7 @@ fix_notes_path() {
 seed_user_memory() {
   local notes="$HH/notes" user_md="$HH/memories/USER.md" public mc_addr ws_addr
   mkdir -p "$HH/memories"
-  public="$(hermes -p "$PROFILE" config get webapp.public_url 2>/dev/null || true)"
+  public="$(hermes -p default config get webapp.public_url 2>/dev/null || true)"
   if [[ "$public" == https://* ]]; then
     ws_addr="$public (your Tailscale address)"
     mc_addr="${public%/}:8443 (your Tailscale address)"

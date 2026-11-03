@@ -15,6 +15,10 @@
 set -euo pipefail
 
 PROFILE="${PROFILE:-sidekick}"
+# Hermes runs one gateway per machine from its default profile (the "host"),
+# serving every profile. The workspace, its address and its password are read
+# from the host's settings, so they are set on the default profile.
+HOST_PROFILE="default"
 WEBAPP_PORT="${WEBAPP_PORT:-9120}"
 MC_PORT="${MC_PORT:-8765}"
 WEB_USER="${WEB_USER:-$(id -un)}"
@@ -80,7 +84,7 @@ tailscale serve status
 
 # ------------------------------------------------ Workspace sign-in
 say "Step 3 of 4: workspace sign-in (username + password)"
-CFG_USER="$(hermes -p "$PROFILE" config get dashboard.basic_auth.username 2>/dev/null || true)"
+CFG_USER="$(hermes -p "$HOST_PROFILE" config get dashboard.basic_auth.username 2>/dev/null || true)"
 if [[ -n "$CFG_USER" && "$CFG_USER" != "None" && "${RESET_PASSWORD:-}" != "1" ]]; then
   echo "A workspace login already exists for '$CFG_USER'. (RESET_PASSWORD=1 to change it.)"
   WEB_USER="$CFG_USER"
@@ -102,9 +106,9 @@ PY
 )"
   unset PW PW2
   SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-  hermes -p "$PROFILE" config set dashboard.basic_auth.username "$WEB_USER" >/dev/null
-  hermes -p "$PROFILE" config set dashboard.basic_auth.password_hash "$HASH" >/dev/null
-  hermes -p "$PROFILE" config set dashboard.basic_auth.secret "$SECRET" >/dev/null
+  hermes -p "$HOST_PROFILE" config set dashboard.basic_auth.username "$WEB_USER" >/dev/null
+  hermes -p "$HOST_PROFILE" config set dashboard.basic_auth.password_hash "$HASH" >/dev/null
+  hermes -p "$HOST_PROFILE" config set dashboard.basic_auth.secret "$SECRET" >/dev/null
   chmod 600 "$HH/config.yaml" 2>/dev/null || true
 fi
 
@@ -114,15 +118,23 @@ say "Step 4 of 4: turning the workspace on at its Tailscale address"
 #   a built bundle  - otherwise it says "The Webapp is not built"
 #   webapp.public_url = this exact https name - otherwise every request gets
 #                     "Invalid Host header" (Hermes only answers to names it was told about)
-# and the gateway must restart afterwards to pick them up.
-hermes -p "$PROFILE" config set webapp.enabled true >/dev/null
-hermes -p "$PROFILE" config set webapp.host 127.0.0.1 >/dev/null
-hermes -p "$PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
-hermes -p "$PROFILE" config set webapp.public_url "https://$TS_NAME" >/dev/null
+# all on the DEFAULT profile (set on sidekick they're silently ignored), and
+# the host gateway must restart afterwards to pick them up.
+hermes -p "$HOST_PROFILE" config set webapp.enabled true >/dev/null
+hermes -p "$HOST_PROFILE" config set webapp.host 127.0.0.1 >/dev/null
+hermes -p "$HOST_PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
+hermes -p "$HOST_PROFILE" config set webapp.public_url "https://$TS_NAME" >/dev/null
 echo "Checking the workspace is built (first time: a few minutes)..."
-hermes -p "$PROFILE" webapp --build-only || die "Workspace build failed (see above). Fix it, then re-run this script."
-echo "Restarting the agent so it picks up the new settings..."
-hermes -p "$PROFILE" gateway restart || warn "Gateway restart failed; run: hermes -p $PROFILE gateway restart"
+hermes -p "$HOST_PROFILE" webapp --build-only || die "Workspace build failed (see above). Fix it, then re-run this script."
+# Older installs created a sidekick-only gateway service; it fights the host
+# gateway for the same bot and port. Remove it if present.
+if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then
+  echo "Removing the old $PROFILE-only gateway service (the host gateway runs $PROFILE now)..."
+  timeout 60 hermes -p "$PROFILE" gateway uninstall || warn "Couldn't remove hermes-gateway-$PROFILE.service."
+fi
+hermes -p "$HOST_PROFILE" gateway install --if-missing >/dev/null || true
+echo "Restarting the agent so it picks up the new settings (up to 2 minutes)..."
+timeout 120 hermes -p "$HOST_PROFILE" gateway restart || warn "Gateway restart failed; run: hermes -p $HOST_PROFILE gateway restart"
 
 # Prove it: ask the workspace for its page the way Tailscale will, with the
 # https name as the Host. 400 = wrong name; nothing = not listening yet.
@@ -132,15 +144,15 @@ for _ in $(seq 1 30); do
   [[ "$CODE" =~ ^(2|3|401) ]] && break
   sleep 2
 done
-hermes -p "$PROFILE" webapp --status 2>/dev/null || true
+hermes -p "$HOST_PROFILE" webapp --status 2>/dev/null || true
 if [[ "$CODE" =~ ^(2|3|401) ]]; then
   echo "Workspace answers at https://$TS_NAME (HTTP $CODE)."
 else
   warn "The workspace isn't answering correctly yet (HTTP ${CODE:-none})."
-  echo "  webapp.enabled    = $(hermes -p "$PROFILE" config get webapp.enabled 2>/dev/null)"
-  echo "  webapp.public_url = $(hermes -p "$PROFILE" config get webapp.public_url 2>/dev/null)  (should be https://$TS_NAME)"
-  echo "  Try: hermes -p $PROFILE gateway restart, wait 20 seconds, then re-run this script."
-  echo "  Still stuck? hermes -p $PROFILE gateway status and hermes -p $PROFILE doctor"
+  echo "  webapp.enabled    = $(hermes -p "$HOST_PROFILE" config get webapp.enabled 2>/dev/null)"
+  echo "  webapp.public_url = $(hermes -p "$HOST_PROFILE" config get webapp.public_url 2>/dev/null)  (should be https://$TS_NAME)"
+  echo "  Try: hermes -p $HOST_PROFILE gateway restart, wait 20 seconds, then re-run this script."
+  echo "  Still stuck? hermes -p $HOST_PROFILE gateway status and hermes -p $HOST_PROFILE doctor"
 fi
 
 # ------------------------------------------------ Memory Card over Tailscale
@@ -173,5 +185,5 @@ Next: turn on voice with  bash $REPO_DIR/scripts/voice-setup.sh grok
       then press the voice conversation button in the workspace and talk.
 
 Not reachable from the public internet. To turn it off:
-  tailscale serve reset && hermes -p $PROFILE config unset webapp.public_url && hermes -p $PROFILE gateway restart
+  tailscale serve reset && hermes -p $HOST_PROFILE config unset webapp.public_url && hermes -p $HOST_PROFILE gateway restart
 EOF

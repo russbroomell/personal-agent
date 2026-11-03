@@ -92,11 +92,13 @@ In Telegram, open your new bot and:
 2. Send `/sethome`, so morning briefs and recaps know where to go.
 3. Say **hi**. The first-session interview starts: pick a character and strength, a few quick questions, and a first errand done for you.
 
-That's Hermes running. Two handy commands on the server:
+That's Hermes running. You don't start anything by hand: Hermes runs one background service (from its built-in `default` profile) that serves every profile on the machine, including `sidekick`. Sidekick's personality, memory, skills and Telegram bot live in the `sidekick` profile; the service, the workspace and its password are set on `default`. The scripts handle both.
+
+Two handy commands on the server:
 
 ```bash
-hermes -p sidekick gateway status   # is it running?
-hermes -p sidekick                  # chat with it in the terminal instead of Telegram
+hermes gateway list    # is it running, and is sidekick being served?
+hermes -p sidekick     # chat with Sidekick in the terminal instead of Telegram
 ```
 
 ### Step 5: See its browser from your laptop or phone (about 5 minutes)

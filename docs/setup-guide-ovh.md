@@ -168,7 +168,7 @@ ssh -N -L 9120:127.0.0.1:9120 -L 8765:127.0.0.1:8765 agent@YOUR_SERVER_IP
 This works the same in Mac Terminal and Windows PowerShell. It looks like it hangs; that's correct. Then **on the server**:
 
 ```bash
-hermes -p sidekick webapp --no-open
+hermes -p default webapp --no-open
 ```
 
 Open the one-use link it prints in your laptop's browser, within 60 seconds. (Once Route A is set up, the workspace asks for the password here too.)
@@ -260,7 +260,7 @@ Hermes refuses to start a screen when less than 1 GB is free; our config lowers 
 
 - **Only SSH is open to the public internet.** The workspace (port 9120) and Memory Card (8765) listen on localhost only. They're reachable through Tailscale, from devices on your Tailscale account and behind a password, or through an SSH tunnel.
 - **Don't make it public.** Tailscale's *Funnel* feature or a router port-forward would put the workspace on the open internet. Hermes's password login is meant for private networks only. If you ever need a public address, use Hermes's Nous account sign-in (see the Hermes web dashboard docs), not the password.
-- **Treat the workspace like a shell on the server.** Anyone signed in can run commands as `agent`. Don't share the password, and sign out on shared computers (`hermes -p sidekick webapp --sign-out` signs out every browser).
+- **Treat the workspace like a shell on the server.** Anyone signed in can run commands as `agent`. Don't share the password, and sign out on shared computers (`hermes -p default webapp --sign-out` signs out every browser).
 - **The bot's screen is a workspace, not a safe.** What you sign in to on it stays signed in for the bot. Never sign in to banking or brokerage there. The house rules forbid it, and so should you.
 - **Commands run directly on the server as `agent`,** not in a Docker sandbox. On a 4 GB box we trade the sandbox for memory, and every risky command still needs your approval. On 8 GB+, set `terminal.backend: docker` with `terminal.docker_image: nousresearch/hermes-sandbox:desktop` to put the shell, browser and screen inside a container.
 - **OVH can technically reach the disk.** That's still far better than a big company holding your memory, and the move script takes everything to a machine at home whenever you like.
@@ -273,20 +273,21 @@ Start with `hermes -p sidekick doctor` and include its output when asking for he
 | --- | --- | --- |
 | `Permission denied (publickey)` for `agent` | Your key wasn't copied | Log in as `ubuntu`/`debian`, then run `sudo cat /home/agent/.ssh/authorized_keys`. Add your `.pub` key if it's missing |
 | `hermes: command not found` | New PATH not loaded yet | `export PATH="$HOME/.local/bin:$PATH"`, or log out and in |
-| Bot never replies | Gateway not running, or Telegram token or ID wrong | `hermes -p sidekick gateway status`; run `hermes -p sidekick gateway run` in the foreground to watch errors |
+| Bot never replies | Gateway not running, or Telegram token or ID wrong | `hermes gateway list` should show `sidekick` served; `journalctl --user -u hermes-gateway -n 50` shows errors |
 | Morning brief never arrives | No home channel | Send `/sethome` to the bot; check `hermes -p sidekick cron list` |
 | Grok login works but replies fail with 403 | xAI hasn't enabled OAuth API access for your tier | Use an xAI API key (`hermes -p sidekick model` → xAI) |
 | Screen says packages missing | Bootstrap step skipped or failed | `hermes -p sidekick computer-use screen status` prints the exact install line; run it with `sudo` |
 | Screen refuses to start (memory) | Less than 1 GB free | `free -h`; close the bot's browser; check that swap is on |
 | Browser on the screen won't start, `No usable sandbox` | Ubuntu's user-namespace restriction | Make sure `browser.executable_path` is `/usr/bin/google-chrome-stable`: `hermes -p sidekick config set browser.executable_path /usr/bin/google-chrome-stable` |
-| Workspace link says it's expired | Links are single-use, valid 60 seconds | Run `hermes -p sidekick webapp --no-open` again |
-| Workspace won't load | Tunnel not running, or webapp off | Re-run the tunnel command, then `hermes -p sidekick webapp --status` |
-| "The Webapp is off" | `webapp.enabled` isn't true | `hermes -p sidekick config set webapp.enabled true`, then `hermes -p sidekick gateway restart` (or re-run `remote-access.sh`, which does both) |
-| "The Webapp is not built" | The workspace app hasn't been built yet | `hermes -p sidekick webapp --build-only` (a few minutes); no restart needed |
-| `{"detail":"Invalid Host header…"}` | The workspace wasn't told its Tailscale name, or the gateway hasn't restarted since | Re-run `remote-access.sh`: it sets `webapp.public_url` to your exact `https://…ts.net` name, restarts, and checks the address answers |
+| Workspace link says it's expired | Links are single-use, valid 60 seconds | Run `hermes -p default webapp --no-open` again |
+| Workspace won't load | Tunnel not running, or webapp off | Re-run the tunnel command, then `hermes -p default webapp --status` |
+| "The Webapp is off" | `webapp.enabled` isn't true on the **default** profile (the gateway ignores it on `sidekick`) | Re-run `remote-access.sh`, or `hermes -p default config set webapp.enabled true` then `hermes -p default gateway restart` |
+| "The Webapp is not built" | The workspace app hasn't been built yet | `hermes -p default webapp --build-only` (a few minutes); no restart needed |
+| `{"detail":"Invalid Host header…"}` | The workspace wasn't told its Tailscale name on the **default** profile, or the gateway hasn't restarted since | Re-run `remote-access.sh`: it sets `webapp.public_url` to your exact `https://…ts.net` name, restarts, and checks the address answers |
 | Tailscale address doesn't load | Your device isn't on Tailscale, or HTTPS isn't enabled for your tailnet | Open the Tailscale app and check it's connected to the same account; on the server, `tailscale serve status`; re-run `remote-access.sh` |
 | Tailscale address loads but the screen viewer won't open | Opened over plain `http://` | Use the `https://…ts.net` address. Browsers block the screen viewer without HTTPS |
 | Workspace password rejected | Wrong password, or too many tries (10 a minute) | Wait a minute; to reset, run `RESET_PASSWORD=1 bash ~/personal-agent/scripts/remote-access.sh` |
+| `gateway restart` hangs | Usually an old sidekick-only gateway service fighting the main one | Ctrl+C. Run `systemctl --user list-units 'hermes-gateway*'`; if `hermes-gateway-sidekick` is listed, `hermes -p sidekick gateway uninstall`, then `hermes -p default gateway restart` |
 | Personality didn't change | Telegram chats are one long session | Send `/new` |
 
 Sources: [Hermes installation](https://hermes-agent.nousresearch.com/docs/getting-started/installation) · [Bot Screen](https://hermes-agent.nousresearch.com/docs/user-guide/features/bot-screen) · [Desktop workspace in a browser](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) · [Providers](https://hermes-agent.nousresearch.com/docs/integrations/providers) · [xAI Grok OAuth](https://hermes-agent.nousresearch.com/docs/guides/xai-grok-oauth) · [OAuth over SSH](https://hermes-agent.nousresearch.com/docs/guides/oauth-over-ssh) · [Profile distributions](https://hermes-agent.nousresearch.com/docs/user-guide/profile-distributions) · [Telegram](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram) · [Cron](https://hermes-agent.nousresearch.com/docs/user-guide/features/cron)

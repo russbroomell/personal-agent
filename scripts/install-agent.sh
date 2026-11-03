@@ -21,6 +21,10 @@ BOT_NAME=""
 STRENGTH="3"
 MC_PORT="${MC_PORT:-8765}"
 WEBAPP_PORT="${WEBAPP_PORT:-9120}"
+# Hermes runs ONE gateway per machine, from its default profile (the "host").
+# It serves every profile, sidekick included. The workspace, its password and
+# the 24/7 service are host settings, so they go on the default profile.
+HOST_PROFILE="default"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 while [[ $# -gt 0 ]]; do
@@ -90,16 +94,16 @@ else
   warn "No host browser recorded (run bootstrap-vps.sh first). Hermes will use its own Chromium."
 fi
 say "Workspace (Hermes Desktop in a browser)"
-# Set explicitly: don't rely on the distribution's config.yaml having been
-# merged, because the gateway keeps the workspace off unless this is true.
-hermes -p "$PROFILE" config set webapp.enabled true >/dev/null
-hermes -p "$PROFILE" config set webapp.host 127.0.0.1 >/dev/null
-hermes -p "$PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
+# The host gateway reads these from the DEFAULT profile; set on sidekick they
+# are ignored and the gateway says "The Webapp is off".
+hermes -p "$HOST_PROFILE" config set webapp.enabled true >/dev/null
+hermes -p "$HOST_PROFILE" config set webapp.host 127.0.0.1 >/dev/null
+hermes -p "$HOST_PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
 # The workspace is a web app that has to be built once (a few minutes; Hermes
 # fetches Node.js for it). Without this the gateway says "not built".
 echo "Building the workspace (a few minutes on a small server)..."
-hermes -p "$PROFILE" webapp --build-only || \
-  warn "Workspace build failed. Retry later with: hermes -p $PROFILE webapp --build-only"
+hermes -p "$HOST_PROFILE" webapp --build-only || \
+  warn "Workspace build failed. Retry later with: hermes -p $HOST_PROFILE webapp --build-only"
 hermes -p "$PROFILE" computer-use status 2>/dev/null | head -5 || \
   warn "Computer Use driver not ready; run: hermes -p $PROFILE computer-use install"
 hermes -p "$PROFILE" computer-use screen status 2>/dev/null | head -8 || true
@@ -145,10 +149,20 @@ if ask "Run the Telegram wizard in this terminal now?"; then
 fi
 
 say "Starting the 24/7 gateway (runs at boot, survives logout)"
-hermes -p "$PROFILE" gateway install || warn "Gateway service install failed; see 'hermes -p $PROFILE gateway status'."
-hermes -p "$PROFILE" gateway restart 2>/dev/null || hermes -p "$PROFILE" gateway start || true
+echo "One gateway, from Hermes's default profile, runs every profile on this"
+echo "machine, including $PROFILE. Its Telegram bot, memory and personality stay"
+echo "in the $PROFILE profile."
+# An older install of this script created a sidekick-only service, which
+# fights the host gateway (it exits with code 78). Remove it if present.
+if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then
+  echo "Removing the old $PROFILE-only gateway service..."
+  timeout 60 hermes -p "$PROFILE" gateway uninstall || warn "Couldn't remove hermes-gateway-$PROFILE.service; see docs/setup-guide-ovh.md troubleshooting."
+fi
+hermes -p "$HOST_PROFILE" gateway install --if-missing || warn "Gateway service install failed; see 'hermes -p $HOST_PROFILE gateway status'."
+timeout 120 hermes -p "$HOST_PROFILE" gateway restart 2>/dev/null || timeout 60 hermes -p "$HOST_PROFILE" gateway start || \
+  warn "Gateway didn't confirm it started; check: hermes gateway list"
 sleep 3
-hermes -p "$PROFILE" gateway status 2>/dev/null | head -10 || true
+hermes -p "$HOST_PROFILE" gateway list 2>/dev/null | head -10 || true
 
 IP="$(curl -fsS -4 https://ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')"
 MC_URL="$(python3 "$REPO_DIR/scripts/memory-card/server.py" --home "$HH" --port "$MC_PORT" --print-url)"
@@ -161,7 +175,7 @@ From your computer, open the private tunnel (leave it running):
     ssh -N -L $WEBAPP_PORT:127.0.0.1:$WEBAPP_PORT -L $MC_PORT:127.0.0.1:$MC_PORT $USER@$IP
 
 Then:
-  Workspace + bot screen:  run  'hermes -p $PROFILE webapp --no-open'  here and open the link it prints
+  Workspace + bot screen:  run  'hermes -p $HOST_PROFILE webapp --no-open'  here and open the link it prints
   Memory Card:             $MC_URL
   Health check:            hermes -p $PROFILE doctor
 

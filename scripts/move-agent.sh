@@ -27,7 +27,7 @@ case "${1:-}" in
     if [[ -f "$HH/memories/USER.md" ]]; then
       sed -i "s|^Notes folder: .*|Notes folder: $HH/notes|" "$HH/memories/USER.md"
     fi
-    echo "Imported. Next: hermes -p $PROFILE model, then reconnect Telegram, then hermes -p $PROFILE gateway install"
+    echo "Imported. Next: hermes -p $PROFILE model, then reconnect Telegram, then hermes -p default gateway install"
     ;;
   *) sed -n '2,13p' "$0"; exit 1 ;;
 esac

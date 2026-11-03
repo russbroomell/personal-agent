@@ -11,5 +11,6 @@ hermes update || echo "hermes update reported a problem; carrying on." >&2
 hermes profile update "$PROFILE" -y
 bash "$HOME/.hermes/profiles/$PROFILE/skills/persona-switch/build-soul.sh"
 systemctl --user restart "sidekick-memory-card-$PROFILE.service" 2>/dev/null || true
-hermes -p "$PROFILE" gateway restart
+# Restart the one host gateway (default profile), which serves $PROFILE too.
+timeout 120 hermes -p default gateway restart || echo "Gateway restart didn't confirm; check: hermes gateway list" >&2
 echo "Updated. Send /new to the bot to pick up any personality or rule changes."

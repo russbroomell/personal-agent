@@ -65,7 +65,7 @@ Change a voice in `distribution/skills/persona-switch/personas/voices.conf`, the
 
 | What you hear or see | Try |
 | --- | --- |
-| No voice bubble, just an audio file | Install ffmpeg: `sudo apt-get install -y ffmpeg`, then `hermes -p sidekick gateway restart` |
+| No voice bubble, just an audio file | Install ffmpeg: `sudo apt-get install -y ffmpeg`, then `hermes -p default gateway restart` |
 | Grok voice errors, or `403` | Your xAI plan may not include voice: `bash ~/personal-agent/scripts/voice-setup.sh free` |
 | Voice conversation button missing or greyed out | You're on plain `http://`. Use the `https://…ts.net` address |
 | It transcribes the wrong words | Speak a little closer; set `stt.language` to your language; with `free`, try a bigger model: `hermes -p sidekick config set stt.local.model small` (more memory) |

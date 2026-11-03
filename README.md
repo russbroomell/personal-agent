@@ -121,7 +121,7 @@ You're set up. Now:
 
 - **Play:** text it "show off" for a menu of party tricks, or try "Have Rex and Mortimer argue about whether I should go to the gym."
 - **Set up an area of your life:** text "what else can you do?" to see the Life Map, and pick one (3–5 minutes each).
-- **Show a friend:** follow **[demo/demo-script.md](demo/demo-script.md)**.
+- **Take the tour:** follow **[demo/demo-script.md](demo/demo-script.md)**, a 45-minute test drive of everything worth trying (and how to try to break it).
 - **Check it's all working:** run through [tests/persona-check.md](tests/persona-check.md).
 - **Something not working?** Run `bash ~/personal-agent/scripts/check.sh`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
 
@@ -138,7 +138,7 @@ You're set up. Now:
 | `docs/setup-guide-ovh.md` | Setup, step by step |
 | `docs/onboarding.md` | How onboarding works, and how a demo carries over to someone's own bot |
 | `docs/voice.md` · `docs/models.md` · `docs/personas.md` | Talking to it · choosing a model · writing a character |
-| `demo/demo-script.md` | How to show it to a friend |
+| `demo/demo-script.md` | A guided test drive: things to try, under the hood, and how to break it |
 | `tests/persona-check.md` | Voice, memory, safety and onboarding checks |
 | `docs/mvp-plan.md`, `docs/plan.md`, `docs/business-plan.md` | Planning notes and research behind the project |
 

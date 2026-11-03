@@ -102,8 +102,10 @@ hermes -p "$HOST_PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
 # The workspace is a web app that has to be built once (a few minutes; Hermes
 # fetches Node.js for it). Without this the gateway says "not built".
 echo "Building the workspace (a few minutes on a small server)..."
-hermes -p "$HOST_PROFILE" webapp --build-only || \
-  warn "Workspace build failed. Retry later with: hermes -p $HOST_PROFILE webapp --build-only"
+# shellcheck source=lib/build.sh
+source "$REPO_DIR/scripts/lib/build.sh"
+build_workspace "$HOST_PROFILE" "$PROFILE" || \
+  warn "Workspace build failed. Retry later with: bash $REPO_DIR/scripts/remote-access.sh"
 hermes -p "$PROFILE" computer-use status 2>/dev/null | head -5 || \
   warn "Computer Use driver not ready; run: hermes -p $PROFILE computer-use install"
 hermes -p "$PROFILE" computer-use screen status 2>/dev/null | head -8 || true

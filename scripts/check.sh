@@ -102,6 +102,16 @@ if command -v tailscale >/dev/null; then
     || meh "Tailscale isn't forwarding to the workspace; run remote-access.sh"
 fi
 
+head_ "Updates"
+echo "  running: $(git -C "$HOME/personal-agent" log --oneline -1 2>/dev/null || echo unknown)"
+if systemctl --user is-enabled --quiet sidekick-update.timer 2>/dev/null; then
+  ok "auto-update is on"
+  [[ -r "$HOME/.local/state/sidekick/last-update" ]] && echo "  last run: $(cat "$HOME/.local/state/sidekick/last-update")"
+  grep -q "FAILED" "$HOME/.local/state/sidekick/last-update" 2>/dev/null && { bad "last auto-update failed and rolled back"; fix "tail -60 ~/.local/state/sidekick/update.log"; }
+else
+  meh "auto-update is off. Turn on: bash ~/personal-agent/scripts/auto-update.sh enable"
+fi
+
 head_ "Summary"
 if [[ $PROBLEMS -eq 0 ]]; then echo "  All good."; else echo "  $PROBLEMS problem(s). Run the 'fix:' lines above, top to bottom."; fi
 [[ $SPEED -eq 0 ]] && echo "  Replies slow? Run: bash ~/personal-agent/scripts/check.sh --speed"

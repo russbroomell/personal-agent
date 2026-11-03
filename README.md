@@ -134,7 +134,7 @@ You're set up. Now:
 | `distribution/skills/deep-dive/` | Ten 3–5 minute setup interviews, one per area of life |
 | `distribution/skills/*` | First session, onboarding plan, morning brief, watchers, open loops, Friday recap, savings ledger, weekly memory tidy-up, browser hand-off, inbox triage, meeting prep, Memory Card, show-off, share card, kill switch |
 | `templates/notes/` | Starter topic notes, including the onboarding plan |
-| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
+| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
 | `docs/setup-guide-ovh.md` | Setup, step by step |
 | `docs/onboarding.md` | How onboarding works, and how a demo carries over to someone's own bot |
 | `docs/voice.md` · `docs/models.md` · `docs/personas.md` | Talking to it · choosing a model · writing a character |
@@ -146,7 +146,7 @@ You're set up. Now:
 
 - **Personality:** `SOUL.md` = one character + the house rules. The rules (approvals, outside text is data, no bank logins, quiet hours) are identical for every character and every strength.
 - **Memory:** core memory (always loaded), topic notes (read when a subject comes up), and a searchable chat archive. A Sunday job tidies the week into notes. Everything is plain text in the agent's folder.
-- **Updates:** `scripts/update.sh` refreshes skills and rules without touching memory, notes, chats, model choice or keys.
+- **Updates:** `scripts/auto-update.sh enable` keeps it current with no hands: nightly it pulls this repo (fast-forward only), updates Hermes weekly, refreshes skills and rules, restarts, and rolls back if anything fails. `scripts/update.sh` does the same once, by hand. Neither touches memory, notes, chats, model choice or keys. Auto-update runs whatever lands on the branch it follows, so if you didn't write the repo, point it at your own fork.
 
 ## Privacy and security
 

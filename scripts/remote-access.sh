@@ -125,7 +125,9 @@ hermes -p "$HOST_PROFILE" config set webapp.host 127.0.0.1 >/dev/null
 hermes -p "$HOST_PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
 hermes -p "$HOST_PROFILE" config set webapp.public_url "https://$TS_NAME" >/dev/null
 echo "Checking the workspace is built (first time: a few minutes)..."
-hermes -p "$HOST_PROFILE" webapp --build-only || die "Workspace build failed (see above). Fix it, then re-run this script."
+# shellcheck source=lib/build.sh
+source "$REPO_DIR/scripts/lib/build.sh"
+build_workspace "$HOST_PROFILE" "$PROFILE" || die "Workspace build failed (see above). Fix it, then re-run this script."
 # Older installs created a sidekick-only gateway service; it fights the host
 # gateway for the same bot and port. Remove it if present.
 if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then

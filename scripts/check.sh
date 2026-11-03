@@ -27,7 +27,8 @@ head_ "Server"
 read -r _ total used _ _ _ avail < <(free -m | awk '/^Mem:/')
 read -r _ swap_total swap_used _ < <(free -m | awk '/^Swap:/')
 echo "  memory: ${avail} MB free of ${total} MB; swap used ${swap_used:-0} of ${swap_total:-0} MB; load $(cut -d' ' -f1-3 /proc/loadavg)"
-[[ "${swap_total:-0}" -gt 0 ]] && ok "swap is on" || { bad "no swap"; fix "sudo bash ~/personal-agent/scripts/bootstrap-vps.sh"; }
+if [[ "${swap_total:-0}" -ge 3900 ]]; then ok "swap is on (${swap_total} MB)"
+else bad "swap is ${swap_total:-0} MB; a 4 GB server needs 4 GB (the workspace build and the screen get killed otherwise)"; fix "sudo bash ~/personal-agent/scripts/bootstrap-vps.sh  (tops swap up to 4 GB)"; fi
 if [[ "${avail:-0}" -lt 500 ]]; then
   bad "under 500 MB free: everything will be slow"
   fix "close the bot's screen: hermes -p $PROFILE computer-use screen stop"
@@ -92,7 +93,7 @@ CODE="$(curl -s -o /dev/null -m 5 -w '%{http_code}' -H "Host: ${PUB#https://}" "
 case "$CODE" in
   2*|3*|401) ok "something answers on port $WEBAPP_PORT (HTTP $CODE)" ;;
   400) bad "rejects the address (Invalid Host header)"; fix "bash ~/personal-agent/scripts/remote-access.sh  (sets the address on the default profile and restarts)" ;;
-  000|"") bad "nothing listening on port $WEBAPP_PORT"; fix "hermes -p default webapp --build-only && hermes -p default gateway restart" ;;
+  000|"") bad "nothing listening on port $WEBAPP_PORT"; fix "bash ~/personal-agent/scripts/remote-access.sh  (builds it safely, then restarts)" ;;
   *) bad "answers HTTP $CODE"; fix "hermes -p default webapp --status" ;;
 esac
 STATUS="$(timeout 15 hermes -p "$HOST_PROFILE" webapp --status 2>&1 | head -3)"

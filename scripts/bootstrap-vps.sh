@@ -66,15 +66,24 @@ apt-get install -y ca-certificates curl git ufw unattended-upgrades python3 \
 say "Automatic security updates"
 dpkg-reconfigure -f noninteractive unattended-upgrades || true
 
-say "Swap (${SWAP_GB} GB)"
-if swapon --show | grep -q .; then
-  echo "Swap already on:"; swapon --show
+say "Swap (at least ${SWAP_GB} GB in total)"
+# Building the workspace and running the bot's screen both need more than
+# 4 GB of RAM at peak. Some VPS images ship a small swap file (or none), so
+# top up to SWAP_GB total rather than skipping when any swap exists.
+HAVE_MB="$(free -m | awk '/^Swap:/{print $2}')"
+WANT_MB=$((SWAP_GB*1024))
+if [[ "${HAVE_MB:-0}" -ge $((WANT_MB - 64)) ]]; then
+  echo "Swap already ${HAVE_MB} MB:"; swapon --show
 else
-  fallocate -l "${SWAP_GB}G" /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP_GB*1024))
-  chmod 600 /swapfile
-  mkswap /swapfile
-  swapon /swapfile
-  grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  ADD_MB=$((WANT_MB - ${HAVE_MB:-0}))
+  SWAPFILE=/swapfile; swapon --show=NAME --noheadings | grep -qx /swapfile && SWAPFILE=/swapfile-sidekick
+  echo "Swap is ${HAVE_MB:-0} MB; adding ${ADD_MB} MB at $SWAPFILE"
+  fallocate -l "${ADD_MB}M" "$SWAPFILE" || dd if=/dev/zero of="$SWAPFILE" bs=1M count="$ADD_MB"
+  chmod 600 "$SWAPFILE"
+  mkswap "$SWAPFILE"
+  swapon "$SWAPFILE"
+  grep -q "^$SWAPFILE " /etc/fstab || echo "$SWAPFILE none swap sw 0 0" >> /etc/fstab
+  swapon --show
 fi
 sysctl -q -w vm.swappiness=20
 echo 'vm.swappiness=20' > /etc/sysctl.d/90-sidekick-swap.conf

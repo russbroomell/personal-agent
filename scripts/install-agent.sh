@@ -179,6 +179,9 @@ Then:
   Memory Card:             $MC_URL
   Health check:            hermes -p $PROFILE doctor
 
+EOF
+[[ -n "${SIDEKICK_SETUP:-}" ]] && exit 0   # setup.sh carries on with the next steps
+cat <<EOF
 Say hi to your bot on Telegram. It will run the 5-minute first session.
 Next: bash $REPO_DIR/scripts/remote-access.sh   (see the bot's browser, no SSH)
       bash $REPO_DIR/scripts/voice-setup.sh grok (talk to it; or 'free')

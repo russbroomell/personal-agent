@@ -89,7 +89,17 @@ if [[ -n "$BROWSER_PATH" && -x "$BROWSER_PATH" ]]; then
 else
   warn "No host browser recorded (run bootstrap-vps.sh first). Hermes will use its own Chromium."
 fi
+say "Workspace (Hermes Desktop in a browser)"
+# Set explicitly: don't rely on the distribution's config.yaml having been
+# merged, because the gateway keeps the workspace off unless this is true.
+hermes -p "$PROFILE" config set webapp.enabled true >/dev/null
+hermes -p "$PROFILE" config set webapp.host 127.0.0.1 >/dev/null
 hermes -p "$PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
+# The workspace is a web app that has to be built once (a few minutes; Hermes
+# fetches Node.js for it). Without this the gateway says "not built".
+echo "Building the workspace (a few minutes on a small server)..."
+hermes -p "$PROFILE" webapp --build-only || \
+  warn "Workspace build failed. Retry later with: hermes -p $PROFILE webapp --build-only"
 hermes -p "$PROFILE" computer-use status 2>/dev/null | head -5 || \
   warn "Computer Use driver not ready; run: hermes -p $PROFILE computer-use install"
 hermes -p "$PROFILE" computer-use screen status 2>/dev/null | head -8 || true

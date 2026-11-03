@@ -281,6 +281,9 @@ Start with `hermes -p sidekick doctor` and include its output when asking for he
 | Browser on the screen won't start, `No usable sandbox` | Ubuntu's user-namespace restriction | Make sure `browser.executable_path` is `/usr/bin/google-chrome-stable`: `hermes -p sidekick config set browser.executable_path /usr/bin/google-chrome-stable` |
 | Workspace link says it's expired | Links are single-use, valid 60 seconds | Run `hermes -p sidekick webapp --no-open` again |
 | Workspace won't load | Tunnel not running, or webapp off | Re-run the tunnel command, then `hermes -p sidekick webapp --status` |
+| "The Webapp is off" | `webapp.enabled` isn't true | `hermes -p sidekick config set webapp.enabled true`, then `hermes -p sidekick gateway restart` (or re-run `remote-access.sh`, which does both) |
+| "The Webapp is not built" | The workspace app hasn't been built yet | `hermes -p sidekick webapp --build-only` (a few minutes); no restart needed |
+| `{"detail":"Invalid Host header…"}` | The workspace wasn't told its Tailscale name, or the gateway hasn't restarted since | Re-run `remote-access.sh`: it sets `webapp.public_url` to your exact `https://…ts.net` name, restarts, and checks the address answers |
 | Tailscale address doesn't load | Your device isn't on Tailscale, or HTTPS isn't enabled for your tailnet | Open the Tailscale app and check it's connected to the same account; on the server, `tailscale serve status`; re-run `remote-access.sh` |
 | Tailscale address loads but the screen viewer won't open | Opened over plain `http://` | Use the `https://…ts.net` address. Browsers block the screen viewer without HTTPS |
 | Workspace password rejected | Wrong password, or too many tries (10 a minute) | Wait a minute; to reset, run `RESET_PASSWORD=1 bash ~/personal-agent/scripts/remote-access.sh` |

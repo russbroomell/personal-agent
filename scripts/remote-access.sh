@@ -108,11 +108,40 @@ PY
   chmod 600 "$HH/config.yaml" 2>/dev/null || true
 fi
 
-say "Step 4 of 4: pointing the workspace at its Tailscale address"
+say "Step 4 of 4: turning the workspace on at its Tailscale address"
+# Three things must all be true, or the address fails:
+#   webapp.enabled  - otherwise the gateway says "The Webapp is off"
+#   a built bundle  - otherwise it says "The Webapp is not built"
+#   webapp.public_url = this exact https name - otherwise every request gets
+#                     "Invalid Host header" (Hermes only answers to names it was told about)
+# and the gateway must restart afterwards to pick them up.
+hermes -p "$PROFILE" config set webapp.enabled true >/dev/null
+hermes -p "$PROFILE" config set webapp.host 127.0.0.1 >/dev/null
+hermes -p "$PROFILE" config set webapp.port "$WEBAPP_PORT" >/dev/null
 hermes -p "$PROFILE" config set webapp.public_url "https://$TS_NAME" >/dev/null
+echo "Checking the workspace is built (first time: a few minutes)..."
+hermes -p "$PROFILE" webapp --build-only || die "Workspace build failed (see above). Fix it, then re-run this script."
+echo "Restarting the agent so it picks up the new settings..."
 hermes -p "$PROFILE" gateway restart || warn "Gateway restart failed; run: hermes -p $PROFILE gateway restart"
-sleep 3
+
+# Prove it: ask the workspace for its page the way Tailscale will, with the
+# https name as the Host. 400 = wrong name; nothing = not listening yet.
+CODE=""
+for _ in $(seq 1 30); do
+  CODE="$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $TS_NAME" "http://127.0.0.1:$WEBAPP_PORT/" || true)"
+  [[ "$CODE" =~ ^(2|3|401) ]] && break
+  sleep 2
+done
 hermes -p "$PROFILE" webapp --status 2>/dev/null || true
+if [[ "$CODE" =~ ^(2|3|401) ]]; then
+  echo "Workspace answers at https://$TS_NAME (HTTP $CODE)."
+else
+  warn "The workspace isn't answering correctly yet (HTTP ${CODE:-none})."
+  echo "  webapp.enabled    = $(hermes -p "$PROFILE" config get webapp.enabled 2>/dev/null)"
+  echo "  webapp.public_url = $(hermes -p "$PROFILE" config get webapp.public_url 2>/dev/null)  (should be https://$TS_NAME)"
+  echo "  Try: hermes -p $PROFILE gateway restart, wait 20 seconds, then re-run this script."
+  echo "  Still stuck? hermes -p $PROFILE gateway status and hermes -p $PROFILE doctor"
+fi
 
 # ------------------------------------------------ Memory Card over Tailscale
 say "Memory Card over Tailscale"

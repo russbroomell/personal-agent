@@ -113,6 +113,8 @@ This puts the server on your private Tailscale network, with an HTTPS address on
 2. Possibly **open a second link to enable HTTPS** for your Tailscale account (click Enable; the script continues on its own).
 3. **Choose a workspace password.** Your username is `agent`.
 
+Then it turns the workspace on, builds it if needed (a few minutes the first time), restarts the agent, and checks the address really answers. If you saw "Webapp is off", "not built" or "Invalid Host header" with an earlier version, just run it again.
+
 It prints two addresses. On your laptop or phone (Tailscale app on):
 
 - **Workspace:** `https://sidekick-vps.<your-tailnet>.ts.net`. Sign in, then open **Bots → sidekick → Screen** to watch the bot's browser. **Take over** gives you the mouse and keyboard; **Hand back** returns them.

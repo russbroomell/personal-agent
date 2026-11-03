@@ -1,0 +1,8 @@
+auth.json
+.env
+.env.EXAMPLE
+memories/
+sessions/
+logs/
+notes/
+state.db*

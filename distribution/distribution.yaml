@@ -1,0 +1,16 @@
+name: sidekick
+version: 0.1.0
+description: "A personal assistant with a real personality that you own: your server, your model, your memory."
+author: "Russ Broomell"
+license: "MIT"
+
+# Only these paths belong to the distribution. SOUL.md is deliberately NOT
+# listed: scripts/set-persona.sh builds it from the chosen persona plus the
+# house rules, and an update must not wipe that choice. Notes, memories and
+# sessions are user data and are never shipped.
+distribution_owned:
+  - config.yaml
+  - skills
+  - distribution.yaml
+
+env_requires: []

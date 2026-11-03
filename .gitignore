@@ -1,0 +1,25 @@
+# Secrets
+.env
+*.env
+auth.json
+*.key
+*.pem
+secrets/
+
+# Personal data (keep templates in git, not your filled-in copies)
+notes/profile.md
+notes/onboarding-followups.md
+notes/_last-distill.md
+*.local.md
+
+# OS and editor clutter
+.DS_Store
+Thumbs.db
+*.swp
+
+# Runtime files if a profile is ever copied into the repo
+distribution/notes/
+distribution/memories/
+distribution/SOUL.md
+distribution/persona.conf
+memory-card.token

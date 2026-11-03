@@ -1,0 +1,31 @@
+# Sidekick defaults. Applied when the profile is installed; preserved on
+# `hermes profile update` unless --force-config is passed.
+# The model is NOT set here: each person picks their own with `hermes model`.
+
+approvals:
+  mode: manual            # ask before every risky command
+  cron_mode: deny         # scheduled jobs can never run risky commands
+  unattended_mode: deny
+
+skills:
+  write_approval: true    # show any new or changed skill before saving it
+
+# Watch-and-take-over browser (Bot Screen). The installer sets
+# browser.executable_path for the host.
+browser:
+  headed: true            # the bot's browsing shows on its screen
+bot_desktop:
+  auto_start: true        # bring the screen up on the first browser use
+  idle_stop_minutes: 20   # free the memory when nobody is using it
+  min_free_memory_mb: 1024  # tuned for a 4 GB VPS with swap
+
+# Desktop workspace in a browser, reached through an SSH tunnel.
+webapp:
+  enabled: true
+  host: 127.0.0.1
+  port: 9120
+
+platforms:
+  telegram:
+    extra:
+      drop_pending_on_cold_boot: false   # don't lose texts sent during a reboot

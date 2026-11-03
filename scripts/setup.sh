@@ -74,6 +74,16 @@ case "${V:-skip}" in
   *) echo "Skipped. Later: bash $REPO_DIR/scripts/voice-setup.sh grok" ;;
 esac
 
+# -------------------------------------------------------- auto-update
+say "Keeping it up to date"
+echo "Nightly at 04:30 (server time) it can pull improvements from GitHub, update"
+echo "Hermes weekly, restart, and roll back by itself if anything fails."
+if ask "Turn on automatic updates?"; then
+  bash "$REPO_DIR/scripts/auto-update.sh" enable || echo "Couldn't turn it on; later: bash $REPO_DIR/scripts/auto-update.sh enable"
+else
+  echo "Skipped. Later: bash $REPO_DIR/scripts/auto-update.sh enable  (or update by hand: update.sh)"
+fi
+
 # ------------------------------------------------------- restart + check
 say "Restarting the agent with everything applied"
 timeout 120 hermes -p default gateway restart || echo "Restart didn't confirm; the check below will say more."

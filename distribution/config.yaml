@@ -2,6 +2,9 @@
 # `hermes profile update` unless --force-config is passed.
 # The model is NOT set here: each person picks their own with `hermes model`.
 
+agent:
+  reasoning_effort: low   # quick chat replies; say "think hard" for tough ones
+
 approvals:
   mode: manual            # ask before every risky command
   cron_mode: deny         # scheduled jobs can never run risky commands

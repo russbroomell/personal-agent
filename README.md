@@ -71,18 +71,23 @@ ssh agent@YOUR_SERVER_IP
 
 Everything from here runs as `agent`. (Optional hardening, back in the first window: `sudo bash ~/personal-agent/scripts/bootstrap-vps.sh --harden-ssh` turns off password and root logins.)
 
-### Step 3: Install the agent (about 15 minutes)
+### Step 3: Run setup (about 20–30 minutes, mostly waiting)
 
 ```bash
-bash ~/personal-agent/scripts/install-agent.sh
+bash ~/personal-agent/scripts/setup.sh
 ```
 
-This installs Hermes Agent and the Sidekick profile (characters, skills, safety settings), creates its notes and memory, and starts the Memory Card page. **You'll be asked:**
+One script does the rest, in five labelled steps. You can run it again any time: finished steps are skipped and nothing the bot knows is touched.
 
-1. **"Set up the model now?"** Yes. In the menu pick **xAI Grok OAuth (SuperGrok / Premium+)**. It shows a link and a code; open the link on any device, enter the code and approve. (Or pick **xAI** and paste an API key.) Choose `grok-4.6`.
-2. **"Run the Telegram wizard?"** Yes. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and paste the token it gives you into the wizard. Get your numeric user ID from [@userinfobot](https://t.me/userinfobot) and paste that too.
+1. **Install Hermes and Sidekick.** You'll be asked:
+   - **"Set up the model now?"** Yes. Pick **xAI Grok OAuth (SuperGrok / Premium+)**, open the link it shows on any device, enter the code and approve. Choose `grok-4.6`. (Or pick **xAI** and paste an API key. Other models: [docs/models.md](docs/models.md).)
+   - **"Run the Telegram wizard?"** Yes. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and paste the token it gives you. Get your numeric user ID from [@userinfobot](https://t.me/userinfobot) and paste that too.
+2. **Tune for speed:** short thinking time on chat replies, so answers come back in seconds.
+3. **The bot's browser on your laptop or phone (optional, recommended).** Install the [Tailscale](https://tailscale.com/download) app on your laptop first. You'll be asked to open a login link and approve the server, possibly to click **Enable** on a second link (HTTPS), and to choose a workspace password (username `agent`). Nothing is opened to the public internet.
+4. **Voice:** type `grok` (Grok's voices), `free`, or `skip`.
+5. **Health check:** a list of ✓ and ✗, with a `fix:` command under anything that's wrong, and a timed test reply from the model.
 
-It then starts the agent as a service that runs 24/7 and survives reboots.
+How it runs: Hermes has one background service, started from its built-in `default` profile, that serves every profile on the machine. Sidekick's personality, memory, skills and Telegram bot live in the `sidekick` profile; the service and the workspace are set on `default`. You never start anything by hand: it runs 24/7 and survives reboots.
 
 ### Step 4: Say hi
 
@@ -92,46 +97,23 @@ In Telegram, open your new bot and:
 2. Send `/sethome`, so morning briefs and recaps know where to go.
 3. Say **hi**. The first-session interview starts: pick a character and strength, a few quick questions, and a first errand done for you.
 
-That's Hermes running. You don't start anything by hand: Hermes runs one background service (from its built-in `default` profile) that serves every profile on the machine, including `sidekick`. Sidekick's personality, memory, skills and Telegram bot live in the `sidekick` profile; the service, the workspace and its password are set on `default`. The scripts handle both.
+Replies should take seconds. If they take a minute, run `bash ~/personal-agent/scripts/check.sh --speed`: it shows whether the model or the server is the slow part.
 
-Two handy commands on the server:
+### Step 5: Use it from your laptop, and talk to it
 
-```bash
-hermes gateway list    # is it running, and is sidekick being served?
-hermes -p sidekick     # chat with Sidekick in the terminal instead of Telegram
-```
+On a laptop or phone with Tailscale on, open the address setup printed: `https://sidekick-vps.<your-tailnet>.ts.net`.
 
-### Step 5: See its browser from your laptop or phone (about 5 minutes)
+- **Watch its browser:** sign in, then **Bots → sidekick → Screen**. **Take over** gives you the mouse and keyboard; **Hand back** returns them.
+- **Talk live:** press the **voice conversation button** just right of the microphone in the chat box, allow the microphone, and talk. You can interrupt it mid-sentence; say "stop" to end. Use headphones (speaker echo makes it interrupt itself). Only works on the `https://` address.
+- **Voice notes:** on your phone, send `/voice on` to the bot once, then send a voice note; it replies with one.
+- **Memory Card:** the `…:8443/?token=…` link setup printed. Everything the bot remembers, editable.
 
-First install the Tailscale app on your laptop (and phone, if you like) and sign in. Then, on the server:
-
-```bash
-bash ~/personal-agent/scripts/remote-access.sh
-```
-
-This puts the server on your private Tailscale network, with an HTTPS address only your devices can open; nothing is opened to the public internet. **You'll be asked to:**
-
-1. **Open a login link** and approve the server in Tailscale.
-2. Possibly **open a second link to enable HTTPS** for your Tailscale account (click Enable; the script continues on its own).
-3. **Choose a workspace password.** Your username is `agent`.
-
-Then it turns the workspace on, builds it if needed (a few minutes the first time), restarts the agent, and checks the address really answers. If you saw "Webapp is off", "not built" or "Invalid Host header" with an earlier version, just run it again.
-
-It prints two addresses. On your laptop or phone (Tailscale app on):
-
-- **Workspace:** `https://sidekick-vps.<your-tailnet>.ts.net`. Sign in, then open **Bots → sidekick → Screen** to watch the bot's browser. **Take over** gives you the mouse and keyboard; **Hand back** returns them.
-- **Memory Card:** the `…:8443/?token=…` link. Everything the bot remembers, editable.
-
-### Step 6: Talk to it (2 minutes)
+Handy commands on the server:
 
 ```bash
-bash ~/personal-agent/scripts/voice-setup.sh grok
+bash ~/personal-agent/scripts/check.sh   # what works, what doesn't, how to fix it
+hermes -p sidekick                       # chat in the terminal instead of Telegram
 ```
-
-This turns on listening and speaking through your Grok account, and gives each character its own voice. Use `free` instead of `grok` for free voices if your xAI plan doesn't include voice. Then:
-
-- **On your phone:** send `/voice on` to the bot once, then send a voice note. It replies with a voice note.
-- **Live conversation:** in the workspace (Step 5's https address), press the **voice conversation button** just right of the microphone in the chat box. Allow the microphone, and talk. You can interrupt it mid-sentence; say "stop" to end. Use headphones, because speaker echo can make it interrupt itself. This only works over the https address, because browsers block the microphone on plain http.
 
 ### Next step
 
@@ -141,7 +123,7 @@ You're set up. Now:
 - **Set up an area of your life:** text "what else can you do?" to see the Life Map, and pick one (3–5 minutes each).
 - **Show a friend:** follow **[demo/demo-script.md](demo/demo-script.md)**.
 - **Check it's all working:** run through [tests/persona-check.md](tests/persona-check.md).
-- **Something not working?** Run `hermes -p sidekick doctor`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
+- **Something not working?** Run `bash ~/personal-agent/scripts/check.sh`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
 
 ## What's in the repo
 
@@ -152,7 +134,7 @@ You're set up. Now:
 | `distribution/skills/deep-dive/` | Ten 3–5 minute setup interviews, one per area of life |
 | `distribution/skills/*` | First session, onboarding plan, morning brief, watchers, open loops, Friday recap, savings ledger, weekly memory tidy-up, browser hand-off, inbox triage, meeting prep, Memory Card, show-off, share card, kill switch |
 | `templates/notes/` | Starter topic notes, including the onboarding plan |
-| `scripts/` | `bootstrap-vps.sh`, `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
+| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
 | `docs/setup-guide-ovh.md` | Setup, step by step |
 | `docs/onboarding.md` | How onboarding works, and how a demo carries over to someone's own bot |
 | `docs/voice.md` · `docs/models.md` · `docs/personas.md` | Talking to it · choosing a model · writing a character |

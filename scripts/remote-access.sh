@@ -133,6 +133,11 @@ if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then
   timeout 60 hermes -p "$PROFILE" gateway uninstall || warn "Couldn't remove hermes-gateway-$PROFILE.service."
 fi
 hermes -p "$HOST_PROFILE" gateway install --if-missing >/dev/null || true
+# Anything else already on the workspace port blocks it (the gateway logs
+# "Address already in use" and a leftover answers in its place).
+# shellcheck source=lib/port.sh
+source "$REPO_DIR/scripts/lib/port.sh"
+free_port "$WEBAPP_PORT" || die "Free port $WEBAPP_PORT (or set WEBAPP_PORT=another port), then re-run this script."
 echo "Restarting the agent so it picks up the new settings (up to 2 minutes)..."
 timeout 120 hermes -p "$HOST_PROFILE" gateway restart || warn "Gateway restart failed; run: hermes -p $HOST_PROFILE gateway restart"
 
@@ -144,7 +149,13 @@ for _ in $(seq 1 30); do
   [[ "$CODE" =~ ^(2|3|401) ]] && break
   sleep 2
 done
-hermes -p "$HOST_PROFILE" webapp --status 2>/dev/null || true
+WSTATUS="$(hermes -p "$HOST_PROFILE" webapp --status 2>&1 || true)"
+echo "$WSTATUS"
+if grep -qi "unavailable\|address already in use" <<<"$WSTATUS"; then
+  warn "The gateway couldn't open the workspace port; something else answered instead."
+  port_strays "$WEBAPP_PORT" | sed 's/^/  holding the port: /'
+  CODE="blocked"
+fi
 if [[ "$CODE" =~ ^(2|3|401) ]]; then
   echo "Workspace answers at https://$TS_NAME (HTTP $CODE)."
 else

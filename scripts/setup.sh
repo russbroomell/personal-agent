@@ -22,6 +22,10 @@ say() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 ask() { local a; read -r -p "$1 [Y/n] " a </dev/tty || a=""; [[ ! "$a" =~ ^[Nn] ]]; }
 [[ $EUID -ne 0 ]] || { echo "Run as 'agent', not root (log in with: ssh agent@YOUR_SERVER_IP)." >&2; exit 1; }
 
+# Make 'hermes' work in every new terminal, not just inside these scripts.
+grep -qs 'HOME/.local/bin' "$HOME/.bashrc" || \
+  printf '\n# Hermes\nexport PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"\n' >> "$HOME/.bashrc"
+
 cat <<'INTRO'
 
 Sidekick setup. About 20-30 minutes, mostly waiting. You'll be asked:

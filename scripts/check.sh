@@ -90,13 +90,21 @@ PUB="$(cfg "$HOST_PROFILE" webapp.public_url)"
 CODE="$(curl -s -o /dev/null -m 5 -w '%{http_code}' -H "Host: ${PUB#https://}" "http://127.0.0.1:$WEBAPP_PORT/" 2>/dev/null || true)"
 [[ "$PUB" != https://* ]] && CODE="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1:$WEBAPP_PORT/" 2>/dev/null || true)"
 case "$CODE" in
-  2*|3*|401) ok "answers on port $WEBAPP_PORT (HTTP $CODE)" ;;
+  2*|3*|401) ok "something answers on port $WEBAPP_PORT (HTTP $CODE)" ;;
   400) bad "rejects the address (Invalid Host header)"; fix "bash ~/personal-agent/scripts/remote-access.sh  (sets the address on the default profile and restarts)" ;;
   000|"") bad "nothing listening on port $WEBAPP_PORT"; fix "hermes -p default webapp --build-only && hermes -p default gateway restart" ;;
   *) bad "answers HTTP $CODE"; fix "hermes -p default webapp --status" ;;
 esac
 STATUS="$(timeout 15 hermes -p "$HOST_PROFILE" webapp --status 2>&1 | head -3)"
 [[ -n "$STATUS" ]] && sed 's/^/  /' <<<"$STATUS"
+# shellcheck source=lib/port.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/port.sh"
+STRAYS="$(port_strays "$WEBAPP_PORT")"
+if grep -qi "unavailable\|address already in use" <<<"$STATUS" || [[ -n "$STRAYS" ]]; then
+  bad "something other than the gateway holds port $WEBAPP_PORT, so the real workspace can't start"
+  [[ -n "$STRAYS" ]] && sed 's/^/      holding it: /' <<<"$STRAYS"
+  fix "bash ~/personal-agent/scripts/remote-access.sh  (stops the leftover and restarts)"
+fi
 if command -v tailscale >/dev/null; then
   tailscale serve status 2>/dev/null | grep -q "$WEBAPP_PORT" && ok "Tailscale forwards https to port $WEBAPP_PORT" \
     || meh "Tailscale isn't forwarding to the workspace; run remote-access.sh"

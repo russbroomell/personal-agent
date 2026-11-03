@@ -42,22 +42,102 @@ Write your own character in ten minutes: [docs/personas.md](docs/personas.md).
 
 ## Get your own
 
-You need a small Linux server (a 4 GB VPS is enough; about $10 a month) or a spare PC running Ubuntu 24.04 or Debian 12/13, a Telegram account, and a model account (Grok is the default). Plan on about an hour.
+**You need:**
+- A small Linux server or spare PC running **Ubuntu 24.04 or Debian 12/13**. A 4 GB VPS is enough (about $10 a month).
+- **Telegram** on your phone.
+- A **Grok** account (SuperGrok or X Premium+), or an xAI API key. Other models work too: see [docs/models.md](docs/models.md).
+- For seeing the bot's browser and for live voice: a free **[Tailscale](https://tailscale.com/download)** account, with the app on your laptop and phone.
+
+Plan on about an hour, mostly waiting for installs. Each step below says what it does and what you'll be asked. The full guide, with troubleshooting, is **[docs/setup-guide-ovh.md](docs/setup-guide-ovh.md)**.
+
+### Step 1: Prepare the server (about 10 minutes)
+
+Log in to your server as its default user (`ubuntu` on Ubuntu, `debian` on Debian):
 
 ```bash
 git clone https://github.com/russbroomell/personal-agent.git ~/personal-agent
-sudo bash ~/personal-agent/scripts/bootstrap-vps.sh   # server prep: swap, firewall, user, bot desktop
+sudo bash ~/personal-agent/scripts/bootstrap-vps.sh
 ```
 
-Then log in as the new `agent` user and run:
+This updates the system and adds 4 GB of swap. It creates an `agent` user (copying your SSH key) and sets the firewall to SSH only. It also installs a small desktop and browser for the bot. **You'll be asked** to choose a password for `agent`, which is needed rarely, for `sudo`.
+
+### Step 2: Log in as `agent`
+
+From your computer, in a new terminal:
 
 ```bash
-bash ~/personal-agent/scripts/install-agent.sh        # Hermes + Sidekick; walks you through model and Telegram
-bash ~/personal-agent/scripts/remote-access.sh        # see the bot's browser from laptop or phone (Tailscale)
-bash ~/personal-agent/scripts/voice-setup.sh grok     # talk to it (or: free)
+ssh agent@YOUR_SERVER_IP
 ```
 
-Step-by-step: **[docs/setup-guide-ovh.md](docs/setup-guide-ovh.md)**. Read the scripts before running them with sudo; they're short and commented.
+Everything from here runs as `agent`. (Optional hardening, back in the first window: `sudo bash ~/personal-agent/scripts/bootstrap-vps.sh --harden-ssh` turns off password and root logins.)
+
+### Step 3: Install the agent (about 15 minutes)
+
+```bash
+bash ~/personal-agent/scripts/install-agent.sh
+```
+
+This installs Hermes Agent and the Sidekick profile (characters, skills, safety settings), creates its notes and memory, and starts the Memory Card page. **You'll be asked:**
+
+1. **"Set up the model now?"** Yes. In the menu pick **xAI Grok OAuth (SuperGrok / Premium+)**. It shows a link and a code; open the link on any device, enter the code and approve. (Or pick **xAI** and paste an API key.) Choose `grok-4.6`.
+2. **"Run the Telegram wizard?"** Yes. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and paste the token it gives you into the wizard. Get your numeric user ID from [@userinfobot](https://t.me/userinfobot) and paste that too.
+
+It then starts the agent as a service that runs 24/7 and survives reboots.
+
+### Step 4: Say hi
+
+In Telegram, open your new bot and:
+
+1. Tap **Start**.
+2. Send `/sethome`, so morning briefs and recaps know where to go.
+3. Say **hi**. The first-session interview starts: pick a character and strength, a few quick questions, and a first errand done for you.
+
+That's Hermes running. Two handy commands on the server:
+
+```bash
+hermes -p sidekick gateway status   # is it running?
+hermes -p sidekick                  # chat with it in the terminal instead of Telegram
+```
+
+### Step 5: See its browser from your laptop or phone (about 5 minutes)
+
+First install the Tailscale app on your laptop (and phone, if you like) and sign in. Then, on the server:
+
+```bash
+bash ~/personal-agent/scripts/remote-access.sh
+```
+
+This puts the server on your private Tailscale network, with an HTTPS address only your devices can open; nothing is opened to the public internet. **You'll be asked to:**
+
+1. **Open a login link** and approve the server in Tailscale.
+2. Possibly **open a second link to enable HTTPS** for your Tailscale account (click Enable; the script continues on its own).
+3. **Choose a workspace password.** Your username is `agent`.
+
+It prints two addresses. On your laptop or phone (Tailscale app on):
+
+- **Workspace:** `https://sidekick-vps.<your-tailnet>.ts.net`. Sign in, then open **Bots → sidekick → Screen** to watch the bot's browser. **Take over** gives you the mouse and keyboard; **Hand back** returns them.
+- **Memory Card:** the `…:8443/?token=…` link. Everything the bot remembers, editable.
+
+### Step 6: Talk to it (2 minutes)
+
+```bash
+bash ~/personal-agent/scripts/voice-setup.sh grok
+```
+
+This turns on listening and speaking through your Grok account, and gives each character its own voice. Use `free` instead of `grok` for free voices if your xAI plan doesn't include voice. Then:
+
+- **On your phone:** send `/voice on` to the bot once, then send a voice note. It replies with a voice note.
+- **Live conversation:** in the workspace (Step 5's https address), press the **voice conversation button** just right of the microphone in the chat box. Allow the microphone, and talk. You can interrupt it mid-sentence; say "stop" to end. Use headphones, because speaker echo can make it interrupt itself. This only works over the https address, because browsers block the microphone on plain http.
+
+### Next step
+
+You're set up. Now:
+
+- **Play:** text it "show off" for a menu of party tricks, or try "Have Rex and Mortimer argue about whether I should go to the gym."
+- **Set up an area of your life:** text "what else can you do?" to see the Life Map, and pick one (3–5 minutes each).
+- **Show a friend:** follow **[demo/demo-script.md](demo/demo-script.md)**.
+- **Check it's all working:** run through [tests/persona-check.md](tests/persona-check.md).
+- **Something not working?** Run `hermes -p sidekick doctor`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
 
 ## What's in the repo
 

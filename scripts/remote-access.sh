@@ -30,6 +30,24 @@ die()  { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
 [[ -d "$HH" ]] || die "Profile $PROFILE isn't installed. Run scripts/install-agent.sh first."
 command -v hermes >/dev/null || die "hermes not on PATH."
 
+cat <<'INTRO'
+
+Remote access: see the workspace, the bot's browser screen and the Memory
+Card from your laptop or phone, with no SSH. Four things will happen:
+
+  1. Tailscale installs, then prints a LOGIN LINK. Open it in any browser,
+     sign in to your Tailscale account, and approve this server.
+  2. Tailscale may print a second link to ENABLE HTTPS for your account.
+     Open it and click Enable; the script carries on by itself.
+  3. You choose a workspace password (your username is shown).
+  4. It prints your private https:// addresses. Open them on a laptop or
+     phone that has the Tailscale app installed and signed in.
+
+Haven't installed the Tailscale app on your laptop/phone yet? Do that now
+(tailscale.com/download), signed in to the same account.
+INTRO
+read -r -p "Press Enter to start (Ctrl+C to stop)... " _ </dev/tty || true
+
 # --------------------------------------------------------------- Tailscale
 if ! command -v tailscale >/dev/null 2>&1; then
   say "Installing Tailscale"
@@ -37,8 +55,9 @@ if ! command -v tailscale >/dev/null 2>&1; then
 fi
 
 if ! tailscale status >/dev/null 2>&1; then
-  say "Connect this server to your Tailscale account"
-  echo "A login link will appear. Open it on any device and approve this server."
+  say "Step 1 of 4: connect this server to your Tailscale account"
+  echo "A login link will appear below. Open it on any device, sign in, and"
+  echo "approve this server. The script waits here until you do."
   sudo tailscale up --operator="$(id -un)" --hostname="${TS_HOSTNAME:-sidekick-vps}"
 else
   sudo tailscale set --operator="$(id -un)" >/dev/null 2>&1 || true
@@ -52,14 +71,15 @@ say "Firewall: allow traffic that arrives over Tailscale only"
 sudo ufw allow in on tailscale0 >/dev/null
 sudo ufw status | grep -i tailscale0 | head -2 || true
 
-say "HTTPS addresses (private to your tailnet)"
-echo "If Tailscale says HTTPS isn't enabled, open the link it prints, enable it, and re-run this script."
+say "Step 2 of 4: private HTTPS addresses"
+echo "If Tailscale prints a link saying Serve or HTTPS isn't enabled, open it,"
+echo "click Enable, and come back: it continues on its own once enabled."
 tailscale serve --bg --https=443 "http://127.0.0.1:$WEBAPP_PORT"
 tailscale serve --bg --https=8443 "http://127.0.0.1:$MC_PORT"
 tailscale serve status
 
 # ------------------------------------------------ Workspace sign-in
-say "Workspace sign-in (username + password)"
+say "Step 3 of 4: workspace sign-in (username + password)"
 CFG_USER="$(hermes -p "$PROFILE" config get dashboard.basic_auth.username 2>/dev/null || true)"
 if [[ -n "$CFG_USER" && "$CFG_USER" != "None" && "${RESET_PASSWORD:-}" != "1" ]]; then
   echo "A workspace login already exists for '$CFG_USER'. (RESET_PASSWORD=1 to change it.)"
@@ -88,7 +108,7 @@ PY
   chmod 600 "$HH/config.yaml" 2>/dev/null || true
 fi
 
-say "Pointing the workspace at its Tailscale address"
+say "Step 4 of 4: pointing the workspace at its Tailscale address"
 hermes -p "$PROFILE" config set webapp.public_url "https://$TS_NAME" >/dev/null
 hermes -p "$PROFILE" gateway restart || warn "Gateway restart failed; run: hermes -p $PROFILE gateway restart"
 sleep 3
@@ -120,6 +140,9 @@ on your laptop and phone first):
   Memory Card:             $MC_URL
 
 Bot screen: in the workspace open Bots > $PROFILE > Screen, then Take over / Hand back.
+Next: turn on voice with  bash $REPO_DIR/scripts/voice-setup.sh grok
+      then press the voice conversation button in the workspace and talk.
+
 Not reachable from the public internet. To turn it off:
   tailscale serve reset && hermes -p $PROFILE config unset webapp.public_url && hermes -p $PROFILE gateway restart
 EOF

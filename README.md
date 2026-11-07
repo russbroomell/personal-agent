@@ -121,6 +121,7 @@ You're set up. Now:
 
 - **Play:** text it "show off" for a menu of party tricks, or try "Have Rex and Mortimer argue about whether I should go to the gym."
 - **Set up an area of your life:** text "what else can you do?" to see the Life Map, and pick one (3–5 minutes each).
+- **Let a friend try it:** `bash ~/personal-agent/scripts/guest-bot.sh create <their-name>` gives them their own locked-down bot on your server, and prints a link to send them.
 - **Take the tour:** follow **[demo/demo-script.md](demo/demo-script.md)**, a 45-minute test drive of everything worth trying (and how to try to break it).
 - **Check it's all working:** run through [tests/persona-check.md](tests/persona-check.md).
 - **Something not working?** Run `bash ~/personal-agent/scripts/check.sh`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
@@ -134,7 +135,7 @@ You're set up. Now:
 | `distribution/skills/deep-dive/` | Ten 3–5 minute setup interviews, one per area of life |
 | `distribution/skills/*` | First session, onboarding plan, morning brief, watchers, open loops, Friday recap, savings ledger, weekly memory tidy-up, browser hand-off, inbox triage, meeting prep, Memory Card, show-off, share card, kill switch |
 | `templates/notes/` | Starter topic notes, including the onboarding plan |
-| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
+| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `guest-bot.sh` (a friend's own test-drive bot), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
 | `docs/setup-guide-ovh.md` | Setup, step by step |
 | `docs/onboarding.md` | How onboarding works, and how a demo carries over to someone's own bot |
 | `docs/voice.md` · `docs/models.md` · `docs/personas.md` | Talking to it · choosing a model · writing a character |

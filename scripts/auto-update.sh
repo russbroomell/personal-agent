@@ -109,7 +109,13 @@ restart_agent() {
 }
 
 apply_profile() {
-  hermes profile update "$PROFILE" -y && bash "$HH/skills/persona-switch/build-soul.sh" >/dev/null
+  hermes profile update "$PROFILE" -y && bash "$HH/skills/persona-switch/build-soul.sh" >/dev/null || return 1
+  # Guest bots (guest-bot.sh) get the same skills and rules.
+  local g
+  while read -r g; do
+    [[ -n "$g" && -d "$HOME/.hermes/profiles/$g" ]] || continue
+    hermes profile update "$g" -y && bash "$HOME/.hermes/profiles/$g/skills/persona-switch/build-soul.sh" >/dev/null || true
+  done < <(cat "$STATE/guests" 2>/dev/null)
 }
 
 run() {

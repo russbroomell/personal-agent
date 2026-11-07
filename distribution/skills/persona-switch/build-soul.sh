@@ -39,6 +39,12 @@ tmp="$(mktemp)"
   sed "s/\b$default_name\b/$name/g" "$src"
   printf '\n'
   cat "$SKILL_DIR/house-rules.md"
+  # Per-bot extra rules (e.g. a guest bot's), kept outside the distribution
+  # so updates and resets don't remove them.
+  if [[ -f "$HOME_DIR/house-rules.local.md" ]]; then
+    printf '\n'
+    cat "$HOME_DIR/house-rules.local.md"
+  fi
 } > "$tmp"
 
 if [[ -f "$HOME_DIR/SOUL.md" ]]; then

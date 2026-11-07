@@ -137,9 +137,24 @@ bash ~/personal-agent/scripts/reset-agent.sh --restore fresh            # back t
 
 More in [docs/onboarding.md](../docs/onboarding.md).
 
-## Showing someone else
+## Letting a friend try it
 
-The same tour works with a friend driving. Hand them the phone, let them do sections 1–4 with their own life, and do section 5 with them on the laptop. Save their run with `--snapshot demo-<name>` if they might want a bot of their own.
+Give them their own bot instead of yours, so their memory stays separate from yours and they can try it on their own time:
+
+```bash
+bash ~/personal-agent/scripts/guest-bot.sh create dave
+```
+
+It takes about 10 minutes:
+- make a second Telegram bot in @BotFather;
+- sign in to your model again (the same account is fine);
+- it prints a message with the bot's link to send them.
+
+Their bot can't run commands on your server or read your bot's files, and it skips the workspace, screen and Memory Card (those stay yours). Their chats use your model account.
+
+- **They're in:** if you didn't enter their Telegram ID, the bot replies to their first message with a pairing code. They send it to you; you run `guest-bot.sh approve dave CODE`.
+- **Start them over:** `guest-bot.sh reset dave`.
+- **Done:** `guest-bot.sh remove dave` deletes it and everything it knows.
 
 ## If something goes wrong
 

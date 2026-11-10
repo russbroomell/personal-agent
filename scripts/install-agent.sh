@@ -41,7 +41,8 @@ done
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!! %s\033[0m\n' "$*" >&2; }
 die()  { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
-ask()  { local a; read -r -p "$1 [Y/n] " a </dev/tty || true; [[ -z "$a" || "$a" =~ ^[Yy] ]]; }
+# shellcheck source=lib/ask.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/ask.sh"
 
 [[ $EUID -ne 0 ]] || die "Run this as your normal user (e.g. 'agent'), not root."
 [[ "$STRENGTH" =~ ^[1-5]$ ]] || die "--strength must be 1 to 5."
@@ -87,7 +88,19 @@ seed_user_memory
 say "Bot Screen browser"
 BROWSER_PATH=""
 [[ -r /etc/sidekick/host.conf ]] && BROWSER_PATH="$(sed -n 's/^BROWSER_PATH=//p' /etc/sidekick/host.conf)"
-if [[ -n "$BROWSER_PATH" && -x "$BROWSER_PATH" ]]; then
+SCREEN=1
+[[ -r /etc/sidekick/host.conf ]] && grep -q '^SCREEN=0' /etc/sidekick/host.conf && SCREEN=0
+if [[ $SCREEN -eq 0 ]]; then
+  # No desktop on this server: browse invisibly instead of on a screen.
+  hermes -p "$PROFILE" config set browser.headed false >/dev/null
+  hermes -p "$PROFILE" config set bot_desktop.auto_start false >/dev/null
+  echo "No bot screen on this server (skipped in bootstrap): the bot browses invisibly."
+else
+  hermes -p "$PROFILE" config set browser.headed true >/dev/null
+  hermes -p "$PROFILE" config set bot_desktop.auto_start true >/dev/null
+fi
+if [[ $SCREEN -eq 0 ]]; then :
+elif [[ -n "$BROWSER_PATH" && -x "$BROWSER_PATH" ]]; then
   hermes -p "$PROFILE" config set browser.executable_path "$BROWSER_PATH"
   echo "Browser: $BROWSER_PATH"
 else

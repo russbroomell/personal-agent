@@ -64,7 +64,11 @@ This is the main way to use Sidekick: your own server, your own Telegram bot, yo
 - A **Grok** account (SuperGrok or X Premium+), or an xAI API key. Other models work too: see [docs/models.md](docs/models.md).
 - For seeing the bot's browser and for live voice: a free **[Tailscale](https://tailscale.com/download)** account, with the app on your laptop and phone.
 
-Plan on about an hour, mostly waiting for installs. Each step below says what it does and what you'll be asked. The full guide, with troubleshooting, is **[docs/setup-guide-ovh.md](docs/setup-guide-ovh.md)**.
+Plan on about an hour, mostly waiting for installs. Each step below says what it does and what you'll be asked.
+
+**You choose what gets installed.** The scripts stop and ask yes/no before each optional part, with the recommended answer shown in capitals: press Enter to take it, or type `n` to skip. So you can, for example, skip the bot's screen on a server where you'll never watch it browse, keep your own firewall rules, or leave out Tailscale, voice or auto-update. Each one can be added later by running its script. Want the recommended setup without the questions? Add `--yes` to `bootstrap-vps.sh` or `setup.sh`.
+
+The full guide, with troubleshooting, is **[docs/setup-guide-ovh.md](docs/setup-guide-ovh.md)**.
 
 ### Step 1: Prepare the server (about 10 minutes)
 
@@ -75,7 +79,16 @@ git clone https://github.com/russbroomell/personal-agent.git ~/personal-agent
 sudo bash ~/personal-agent/scripts/bootstrap-vps.sh
 ```
 
-This updates the system and adds 4 GB of swap. It creates an `agent` user (copying your SSH key) and sets the firewall to SSH only. It also installs a small desktop and browser for the bot. **You'll be asked** to choose a password for `agent`, which is needed rarely, for `sudo`.
+This creates an `agent` user (copying your SSH key) and installs the basics. **You'll be asked:**
+
+| Question | Recommended | Say no if… |
+| --- | --- | --- |
+| Upgrade the installed system packages now? | Yes | You manage updates yourself |
+| Let the server install security updates by itself? | Yes | You manage updates yourself |
+| Add swap, up to 4 GB? (only asked if there's less) | Yes | The server has 8 GB or more of RAM |
+| Turn on the firewall, allowing only SSH in? | Yes | You already run your own firewall rules |
+| Install the bot's screen? (a small desktop and Chrome, about 1 GB) | Yes | You don't need to watch it browse; it still browses, invisibly |
+| A password for `agent` | | Needed rarely, for `sudo` |
 
 ### Step 2: Log in as `agent`
 
@@ -93,14 +106,15 @@ Everything from here runs as `agent`. (Optional hardening, back in the first win
 bash ~/personal-agent/scripts/setup.sh
 ```
 
-One script does the rest, in five labelled steps. You can run it again any time: finished steps are skipped and nothing the bot knows is touched.
+One script does the rest, in five labelled steps, asking yes/no before each optional one. You can run it again any time: finished steps are skipped and nothing the bot knows is touched.
 
 1. **Install Hermes and Sidekick.** You'll be asked:
    - **"Set up the model now?"** Yes. Pick **xAI Grok OAuth (SuperGrok / Premium+)**, open the link it shows on any device, enter the code and approve. Choose the newest Grok in the list (for example `grok-4.7`). If replies later fail with a 403, your plan doesn't include API access; use an xAI API key instead. (Or pick **xAI** and paste an API key. Other models: [docs/models.md](docs/models.md).)
    - **"Run the Telegram wizard?"** Yes. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and paste the token it gives you. Get your numeric user ID from [@userinfobot](https://t.me/userinfobot) and paste that too.
-2. **Tune for speed:** short thinking time on chat replies, so answers come back in seconds.
+2. **Tune for speed** (yes/no): short thinking time on chat replies, so answers come back in seconds instead of a minute.
 3. **The bot's browser on your laptop or phone (optional, recommended).** Install the [Tailscale](https://tailscale.com/download) app on your laptop first. You'll be asked to open a login link and approve the server, possibly to click **Enable** on a second link (HTTPS), and to choose a workspace password (username `agent`). Nothing is opened to the public internet.
 4. **Voice:** type `grok` (Grok's voices), `free`, or `skip`.
+   Then **automatic updates** (yes/no): nightly, with rollback if anything breaks.
 5. **Health check:** a list of ✓ and ✗, with a `fix:` command under anything that's wrong, and a timed test reply from the model.
 
 How it runs: Hermes has one background service, started from its built-in `default` profile, that serves every profile on the machine. Sidekick's personality, memory, skills and Telegram bot live in the `sidekick` profile; the service and the workspace are set on `default`. You never start anything by hand: it runs 24/7 and survives reboots.
@@ -140,7 +154,7 @@ You're set up. Now:
 - **Tell a friend:** send them this repo; they can have their own running in an hour. Want them to try it first? `bash ~/personal-agent/scripts/guest-bot.sh create <their-name>` gives them a locked-down test-drive bot on your server, with a link to send them.
 - **Take the tour:** follow **[demo/demo-script.md](demo/demo-script.md)**, a 45-minute test drive of everything worth trying (and how to try to break it).
 - **Check it's all working:** run through [tests/persona-check.md](tests/persona-check.md).
-- **Something not working?** Run `bash ~/personal-agent/scripts/check.sh`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
+- **Something not working?** See [Getting help](#getting-help-and-reporting-problems).
 
 ## What gets installed, and why
 
@@ -221,6 +235,14 @@ If a friend already runs Sidekick, they can make you a test-drive bot on their s
 - Only SSH is open to the internet. The workspace and Memory Card are reached through Tailscale (private, password-protected) or an SSH tunnel.
 - Never commit your `.env`, `auth.json`, memories or notes. `.gitignore` blocks the usual ones.
 - Found a security problem? Please open a GitHub issue without exploit details and ask for a private contact, rather than posting the details.
+
+## Getting help and reporting problems
+
+1. **Run the health check first:** `bash ~/personal-agent/scripts/check.sh --speed`. Most problems show up as a red ✗ with a `fix:` command right under it.
+2. **Check the troubleshooting table** in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
+3. **Still stuck? [Open a GitHub issue](https://github.com/russbroomell/personal-agent/issues/new/choose).** The form asks for the step you were on and the health-check output, which is usually enough to find the problem. Issues are public, so the next person with the same problem finds the answer. Never paste bot tokens, API keys, or anything from `.env` or `auth.json`.
+
+Problems in Hermes itself (its installer, gateway or workspace) belong on [Hermes Agent's issues](https://github.com/NousResearch/hermes-agent/issues). If you're not sure which it is, open one here.
 
 ## Contributing
 

@@ -139,7 +139,9 @@ More in [docs/onboarding.md](../docs/onboarding.md).
 
 ## Letting a friend try it
 
-Give them their own bot instead of yours, so their memory stays separate from yours and they can try it on their own time:
+**The best way: they run their own.** Send them the repo link, https://github.com/russbroomell/personal-agent. The README walks them through renting a $10 server and setting it up in about an hour, with their own Telegram bot and model account, so it's theirs from day one. Offer to be on a call for the first ten minutes; the server prep is the only fiddly part.
+
+**To try before they commit,** give them a test-drive bot on your server instead. Their memory stays separate from yours and they can try it on their own time:
 
 ```bash
 bash ~/personal-agent/scripts/guest-bot.sh create dave

@@ -6,6 +6,19 @@ You text it or talk to it like a sharp, funny assistant. It takes errands, remin
 
 Built on the open-source [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. Early and evolving: it's demo-ready, not a polished product.
 
+**Run your own in about an hour:** [jump to setup](#run-your-own).
+
+## Why it's worth an hour
+
+- **It's yours, not a platform's.** It lives on a $10-a-month server you rent (or a PC in your closet). There's no company in the middle reading your life to sell ads or train its next model. Everything it knows about you is a folder of plain text files you can open, edit, back up, move or delete.
+- **Any brain you like.** Grok, OpenAI, OpenRouter's hundreds of models, Nous Portal, or a model on your own GPU. Switch with one command and it keeps every memory: the memory belongs to you, not the model.
+- **It actually does things.** It browses the web on its own screen, compares and drafts, sets reminders and watchers, and writes you a morning brief. You can watch it work from your phone and take the mouse whenever you like.
+- **It has a personality, and you choose how much.** Six characters, from a calm chief of staff to a 1940s noir detective, with a strength dial from 1 (a hint) to 5 (full character). Have two of them argue about your gym plans.
+- **You can talk to it.** Voice notes on Telegram, or a live conversation in the browser that you can interrupt mid-sentence.
+- **It's careful with your stuff.** It asks before anything that spends, sends, books or cancels, treats emails and web pages as information rather than orders, and stays away from bank logins. "Stop everything" pauses it all.
+- **It's all plain text you can change.** Characters, skills and setup interviews are Markdown files. Write a new character in ten minutes, or a new skill for your job.
+- **Free and open source** (MIT), built on [Hermes Agent](https://github.com/NousResearch/hermes-agent). You pay only for the server and your model.
+
 ## Meet the cast
 
 Pick one in the first chat, and choose how strong (1 = a hint, 5 = full character). Switch any time.
@@ -38,9 +51,12 @@ Write your own character in ten minutes: [docs/personas.md](docs/personas.md).
 - **Talk to it:** voice notes on Telegram, or a live voice conversation in the browser that you can interrupt. Each character has its own voice.
 - **A browser you can watch:** it browses on its own screen. You see it live from your laptop or phone and take over for logins, CAPTCHAs and payments.
 - **Your data, your model:** the Memory Card page shows every line it remembers, and you can edit any of it. Use Grok, OpenAI, OpenRouter, Nous Portal, or your own model. One command moves the whole agent to another machine.
+- **Looks after itself:** a health check that tells you what's wrong and how to fix it, nightly auto-updates with rollback, and a reset button.
 - **Safe by default:** it asks before anything that spends, sends, books or cancels. It treats emails and web pages as information, never orders. It never touches bank logins. "Stop everything" pauses it all.
 
-## Get your own
+## Run your own
+
+This is the main way to use Sidekick: your own server, your own Telegram bot, your own model account. Nobody else (including whoever sent you this link) can see it.
 
 **You need:**
 - A small Linux server or spare PC running **Ubuntu 24.04 or Debian 12/13**. A 4 GB VPS is enough (about $10 a month).
@@ -80,7 +96,7 @@ bash ~/personal-agent/scripts/setup.sh
 One script does the rest, in five labelled steps. You can run it again any time: finished steps are skipped and nothing the bot knows is touched.
 
 1. **Install Hermes and Sidekick.** You'll be asked:
-   - **"Set up the model now?"** Yes. Pick **xAI Grok OAuth (SuperGrok / Premium+)**, open the link it shows on any device, enter the code and approve. Choose `grok-4.6`. (Or pick **xAI** and paste an API key. Other models: [docs/models.md](docs/models.md).)
+   - **"Set up the model now?"** Yes. Pick **xAI Grok OAuth (SuperGrok / Premium+)**, open the link it shows on any device, enter the code and approve. Choose the newest Grok in the list (for example `grok-4.7`). If replies later fail with a 403, your plan doesn't include API access; use an xAI API key instead. (Or pick **xAI** and paste an API key. Other models: [docs/models.md](docs/models.md).)
    - **"Run the Telegram wizard?"** Yes. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot`, and paste the token it gives you. Get your numeric user ID from [@userinfobot](https://t.me/userinfobot) and paste that too.
 2. **Tune for speed:** short thinking time on chat replies, so answers come back in seconds.
 3. **The bot's browser on your laptop or phone (optional, recommended).** Install the [Tailscale](https://tailscale.com/download) app on your laptop first. You'll be asked to open a login link and approve the server, possibly to click **Enable** on a second link (HTTPS), and to choose a workspace password (username `agent`). Nothing is opened to the public internet.
@@ -121,10 +137,60 @@ You're set up. Now:
 
 - **Play:** text it "show off" for a menu of party tricks, or try "Have Rex and Mortimer argue about whether I should go to the gym."
 - **Set up an area of your life:** text "what else can you do?" to see the Life Map, and pick one (3–5 minutes each).
-- **Let a friend try it:** `bash ~/personal-agent/scripts/guest-bot.sh create <their-name>` gives them their own locked-down bot on your server, and prints a link to send them.
+- **Tell a friend:** send them this repo; they can have their own running in an hour. Want them to try it first? `bash ~/personal-agent/scripts/guest-bot.sh create <their-name>` gives them a locked-down test-drive bot on your server, with a link to send them.
 - **Take the tour:** follow **[demo/demo-script.md](demo/demo-script.md)**, a 45-minute test drive of everything worth trying (and how to try to break it).
 - **Check it's all working:** run through [tests/persona-check.md](tests/persona-check.md).
 - **Something not working?** Run `bash ~/personal-agent/scripts/check.sh`, then see the troubleshooting table in [docs/setup-guide-ovh.md](docs/setup-guide-ovh.md#if-something-goes-wrong).
+
+## What gets installed, and why
+
+Nothing here is hidden: every step is a readable script in `scripts/`, and each one prints what it's doing as it goes.
+
+### On the server (`bootstrap-vps.sh`, run once with sudo)
+
+| What | Why |
+| --- | --- |
+| System updates and **automatic security updates** (`unattended-upgrades`) | The server patches itself; you don't have to remember to |
+| **4 GB of swap** (topped up if the server has less) | A 4 GB server runs out of memory building the workspace and running the bot's browser without it |
+| An **`agent` user** that keeps running after you log out (systemd "linger") | The bot runs as an ordinary user, not root, and stays up 24/7 |
+| **Firewall: SSH only** (`ufw`) | Nothing else is reachable from the internet. The workspace is private (see Tailscale below) |
+| **A small desktop** (TigerVNC and a minimal Xfce, about 1 GB of disk) | The bot's own screen, so its browsing is visible and you can take over |
+| **Google Chrome** (Ubuntu) or **Chromium** (Debian) | The browser the bot uses on that screen |
+| `ffmpeg`, `git`, `curl`, `python3`, `jq`, `tmux` and a few libraries | Voice notes, updates, and the helper scripts |
+| Optional, with `--harden-ssh`: no root login, no password logins | Keys only, once you've checked `ssh agent@…` works |
+
+### For the `agent` user (`setup.sh`)
+
+| What | Why |
+| --- | --- |
+| **[Hermes Agent](https://github.com/NousResearch/hermes-agent)**, with the official installer (it fetches its own Python and Node.js) | The open-source engine: model connections, memory, tools, Telegram, scheduling, the bot's screen and the workspace |
+| The **Sidekick profile** in `~/.hermes/profiles/sidekick` | Everything that makes it Sidekick: the characters, house rules, 18 skills, safety settings and starter notes. Your memory and notes live here too, as plain text |
+| **One background service** (`hermes-gateway`, a systemd user service) | Runs the bot 24/7, starts at boot, and serves every bot profile on the machine |
+| The **workspace** (Hermes Desktop in a browser), built once on the server | Chat, the bot's live screen, voice conversation and settings, from any browser on your Tailscale network |
+| The **Memory Card** (a tiny Python page, localhost only, with its own secret link) | See and edit every line the bot remembers |
+| Optional: **Tailscale** | A private `https://…ts.net` address that only your own devices can open, so you can see the bot's screen and talk to it without SSH and without opening anything to the internet |
+| Optional: **voices** (Grok's, or free Edge voices) and **local speech recognition** | Voice notes in and out, each character with its own voice |
+| Optional: **nightly auto-update** (a systemd timer) | Pulls improvements from GitHub, updates Hermes weekly, and rolls back by itself if anything breaks |
+
+### What it costs to run
+
+- **Server:** about $10 a month for a 4 GB VPS. In use it needs about 600 MB for the service, plus 1–1.5 GB while the bot's browser screen is open (it closes itself when idle).
+- **Model:** your plan or pay-per-use. A SuperGrok or X Premium+ subscription covers Grok with no extra bill; API keys are charged per use.
+- **Everything else** (Hermes, Sidekick, Tailscale's personal plan, Telegram) is free.
+
+### What it doesn't do
+
+- It doesn't open any port except SSH to the internet.
+- It doesn't send your memory anywhere. Your model provider sees only what each reply needs.
+- It doesn't phone home. This project has no analytics and no accounts, and Sidekick turns Hermes's optional shared metrics off. The only outside calls are to your model provider, Telegram, the websites it browses for you, and GitHub for updates.
+
+### Removing it
+
+`hermes uninstall` removes Hermes and everything under `~/.hermes` (back up first with `scripts/backup.sh` if you want to keep anything). Then `sudo userdel -r agent` removes the user and its files, and `sudo tailscale logout` takes the server off your Tailscale network.
+
+## Just want to try it first?
+
+If a friend already runs Sidekick, they can make you a test-drive bot on their server with `scripts/guest-bot.sh create <your-name>`. You get a Telegram link and can try it in two minutes. It's locked down, so it can't run commands, open the browser screen or touch the workspace. When you want the real thing, follow [Run your own](#run-your-own).
 
 ## What's in the repo
 

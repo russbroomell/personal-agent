@@ -18,6 +18,9 @@
 #   5. Installs the bot's desktop (TigerVNC + Xfce) and a headed browser
 #      for Bot Screen (watch and take over the agent's browser)
 #
+# It asks yes/no before each optional part (Enter takes the recommended
+# answer). --yes takes every recommended answer without asking.
+#
 # SSH hardening (no root login, no passwords) is a separate, explicit step:
 #   sudo bash bootstrap-vps.sh --harden-ssh
 # Run it only after you've confirmed `ssh agent@YOUR_SERVER` works.
@@ -29,6 +32,8 @@ SWAP_GB="${SWAP_GB:-4}"
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!! %s\033[0m\n' "$*" >&2; }
 die()  { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
+# shellcheck source=lib/ask.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/ask.sh"
 
 [[ $EUID -eq 0 ]] || die "Run as root: sudo bash $0"
 [[ -r /etc/os-release ]] || die "Can't read /etc/os-release"
@@ -50,6 +55,7 @@ harden_ssh() {
   say "Done. Keep this window open and test 'ssh $AGENT_USER@<server>' in a new one."
 }
 
+[[ "${1:-}" == "--yes" || "${1:-}" == "-y" ]] && export SIDEKICK_YES=1
 if [[ "${1:-}" == "--harden-ssh" ]]; then
   harden_ssh
   exit 0
@@ -57,14 +63,28 @@ fi
 
 export DEBIAN_FRONTEND=noninteractive
 
-say "Updating packages (a few minutes)"
+cat <<'INTRO'
+
+Preparing this server for Sidekick. It asks yes/no before each optional
+part; press Enter for the recommended answer (shown as the capital letter).
+
+INTRO
+
+say "Packages"
 apt-get update -y
-apt-get -y -o Dpkg::Options::=--force-confold upgrade
+if ask "Upgrade the installed system packages now? (recommended on a new server)" Y; then
+  apt-get -y -o Dpkg::Options::=--force-confold upgrade
+fi
+echo "Installing the basics Sidekick needs (git, curl, python3, ffmpeg, ...)"
 apt-get install -y ca-certificates curl git ufw unattended-upgrades python3 \
   xz-utils unzip jq tmux libatomic1 ffmpeg
 
 say "Automatic security updates"
-dpkg-reconfigure -f noninteractive unattended-upgrades || true
+if ask "Let the server install security updates by itself?" Y; then
+  dpkg-reconfigure -f noninteractive unattended-upgrades || true
+else
+  echo "Skipped. Remember to run 'sudo apt-get upgrade' now and then."
+fi
 
 say "Swap (at least ${SWAP_GB} GB in total)"
 # Building the workspace and running the bot's screen both need more than
@@ -74,6 +94,8 @@ HAVE_MB="$(free -m | awk '/^Swap:/{print $2}')"
 WANT_MB=$((SWAP_GB*1024))
 if [[ "${HAVE_MB:-0}" -ge $((WANT_MB - 64)) ]]; then
   echo "Swap already ${HAVE_MB} MB:"; swapon --show
+elif ! ask "Swap is ${HAVE_MB:-0} MB. Add more, up to ${SWAP_GB} GB? (needed on a 4 GB server; skip only with 8 GB+ RAM)" Y; then
+  warn "Skipped swap. On a 4 GB server the workspace build and the bot's screen may be killed for lack of memory."
 else
   ADD_MB=$((WANT_MB - ${HAVE_MB:-0}))
   SWAPFILE=/swapfile; swapon --show=NAME --noheadings | grep -qx /swapfile && SWAPFILE=/swapfile-sidekick
@@ -138,18 +160,30 @@ if [[ -f "$SRC_HOME/.ssh/sidekick_deploy" ]]; then
   echo "Deploy key installed for $AGENT_USER"
 fi
 
-say "Firewall: SSH only"
-ufw allow OpenSSH >/dev/null
-ufw --force enable
-ufw status | head -5
+say "Firewall"
+if ask "Turn on the firewall, allowing only SSH in? (recommended; Sidekick needs no other open ports)" Y; then
+  ufw allow OpenSSH >/dev/null
+  ufw --force enable
+  ufw status | head -5
+else
+  warn "Firewall left as it was."
+fi
 
-say "Bot Screen desktop (TigerVNC + Xfce core, ~1 GB disk)"
+say "The bot's screen"
+cat <<'SCREEN'
+A small desktop and a real browser for the bot, so you can watch it browse
+and take over for logins (about 1 GB of disk; 1-1.5 GB of memory while it's
+open). Without it, the bot still browses the web, you just can't watch.
+SCREEN
+SCREEN=1
+ask "Install the bot's screen?" Y || SCREEN=0
+BROWSER_PATH=""
+if [[ $SCREEN -eq 1 ]]; then
 apt-get install -y tigervnc-standalone-server xfce4-panel xfwm4 xfdesktop4 \
   xfce4-settings xfce4-terminal dbus-x11 x11-xserver-utils x11-utils xauth \
   fonts-dejavu-core at-spi2-core
 
-say "Headed browser for the bot's screen"
-BROWSER_PATH=""
+echo "Installing the browser for the bot's screen"
 if [[ "$ID" == "debian" ]]; then
   apt-get install -y chromium
   BROWSER_PATH=/usr/bin/chromium
@@ -167,8 +201,9 @@ else
     warn "Not amd64: skipping Chrome. Hermes will try its own Chromium."
   fi
 fi
+fi   # SCREEN
 install -d -m 755 /etc/sidekick
-echo "BROWSER_PATH=${BROWSER_PATH}" > /etc/sidekick/host.conf
+printf 'BROWSER_PATH=%s\nSCREEN=%s\n' "$BROWSER_PATH" "$SCREEN" > /etc/sidekick/host.conf
 
 say "All set"
 cat <<EOF
@@ -179,8 +214,8 @@ Server is ready. Next:
        ssh $AGENT_USER@$(hostname -I 2>/dev/null | awk '{print $1}')
   2. Then (optional but recommended), back here:
        sudo bash $0 --harden-ssh
-  3. Log in as $AGENT_USER and install the agent:
-       bash ~/personal-agent/scripts/install-agent.sh
+  3. Log in as $AGENT_USER and set up the agent:
+       bash ~/personal-agent/scripts/setup.sh
 
 Memory: $(free -h | awk '/Mem:/{print $2" RAM"}'), $(free -h | awk '/Swap:/{print $2" swap"}').
 EOF

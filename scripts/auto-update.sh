@@ -3,15 +3,19 @@
 #
 #   bash ~/personal-agent/scripts/auto-update.sh enable    # nightly at 04:30 (server time)
 #   bash ~/personal-agent/scripts/auto-update.sh enable --time 03:15 --tz America/Chicago
-#   bash ~/personal-agent/scripts/auto-update.sh enable --hermes daily   # or weekly (default) / never
+#   bash ~/personal-agent/scripts/auto-update.sh enable --channel main  # follow main instead of stable
+#   bash ~/personal-agent/scripts/auto-update.sh enable --hermes weekly # Hermes: tested (default) / weekly / daily / never
 #   bash ~/personal-agent/scripts/auto-update.sh status    # schedule + last result
 #   bash ~/personal-agent/scripts/auto-update.sh run       # do one update now
 #   bash ~/personal-agent/scripts/auto-update.sh disable
 #
 # Each night it:
-#   1. fetches this repo; fast-forwards only (never merges, never discards
-#      local changes: if it can't fast-forward it skips and says why)
-#   2. updates Hermes itself (weekly by default, Sundays)
+#   1. fetches the repo's `stable` branch (only tried-and-tested releases;
+#      `--channel main` follows every change instead) and fast-forwards to it
+#      (never merges, never discards local changes: if it can't, it says why)
+#   2. updates Hermes itself only when this release says it was tested with
+#      a newer Hermes (file HERMES_VERSION). --hermes weekly/daily updates
+#      Hermes on a schedule instead, ahead of what's been tested
 #   3. if anything changed: refreshes the profile (skills, house rules),
 #      rebuilds SOUL.md with your chosen character, restarts the agent
 #   4. runs the health check; if the refresh or restart failed, it rolls the
@@ -38,22 +42,28 @@ say() { printf '%s %s\n' "$(date '+%F %T')" "$*" | tee -a "$LOG"; }
 die() { echo "$*" >&2; exit 1; }
 [[ $EUID -ne 0 || -n "${SIDEKICK_ALLOW_ROOT:-}" ]] || die "Run as 'agent', not root."
 
-HERMES_EVERY="weekly"
+HERMES_EVERY="tested"; CHANNEL=""
+# shellcheck disable=SC1090
 [[ -r "$CONF" ]] && source "$CONF"
+# Configs from before channels existed had the old implicit default.
+if [[ -z "$CHANNEL" ]]; then CHANNEL="stable"; [[ "$HERMES_EVERY" == weekly ]] && HERMES_EVERY="tested"; fi
 
 enable() {
-  local time="04:30" tz="" hermes="$HERMES_EVERY"
+  local time="04:30" tz="" hermes="$HERMES_EVERY" channel="$CHANNEL"
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --time) time="$2"; shift 2 ;;
       --tz) tz="$2"; shift 2 ;;
       --hermes) hermes="$2"; shift 2 ;;
+      --channel) channel="$2"; shift 2 ;;
       *) die "Unknown option: $1" ;;
     esac
   done
   [[ "$time" =~ ^[0-2][0-9]:[0-5][0-9]$ ]] || die "--time must look like 04:30"
-  [[ "$hermes" =~ ^(daily|weekly|never)$ ]] || die "--hermes must be daily, weekly or never"
-  echo "HERMES_EVERY=$hermes" > "$CONF"
+  [[ "$hermes" =~ ^(tested|daily|weekly|never)$ ]] || die "--hermes must be tested, daily, weekly or never"
+  [[ "$channel" =~ ^[A-Za-z0-9._/-]+$ ]] || die "--channel must be a branch name, e.g. stable or main"
+  printf 'HERMES_EVERY=%s\nCHANNEL=%s\n' "$hermes" "$channel" > "$CONF"
+  CHANNEL="$channel"; HERMES_EVERY="$hermes"
   mkdir -p "$UDIR"
   cat > "$UDIR/$UNIT.service" <<EOF
 [Unit]
@@ -80,7 +90,7 @@ WantedBy=timers.target
 EOF
   systemctl --user daemon-reload
   systemctl --user enable --now "$UNIT.timer"
-  echo "Auto-update is on: nightly at $time${tz:+ ($tz)}, Hermes itself $hermes."
+  echo "Auto-update is on: nightly at $time${tz:+ ($tz)}, following '$channel'; Hermes updates: $hermes."
   systemctl --user list-timers "$UNIT.timer" --no-pager | head -3
   echo "Log: $LOG    Check any time: bash $REPO_DIR/scripts/auto-update.sh status"
 }
@@ -94,7 +104,7 @@ disable() {
 
 status() {
   if systemctl --user is-enabled --quiet "$UNIT.timer" 2>/dev/null; then
-    echo "Auto-update: on (Hermes itself: $HERMES_EVERY)"
+    echo "Auto-update: on, following '$CHANNEL' (Hermes updates: $HERMES_EVERY; tested with $(cat "$REPO_DIR/HERMES_VERSION" 2>/dev/null || echo ?))"
     systemctl --user list-timers "$UNIT.timer" --no-pager | head -2
   else
     echo "Auto-update: off. Turn on: bash $REPO_DIR/scripts/auto-update.sh enable"
@@ -124,28 +134,52 @@ run() {
   say "---- auto-update start"
   local before after changed=0 result="no changes"
 
-  # 1. This repo: fast-forward only.
+  # 1. This repo: fast-forward to the channel branch (stable by default).
+  local target
   before="$(git -C "$REPO_DIR" rev-parse HEAD)"
   if ! git -C "$REPO_DIR" fetch -q origin 2>>"$LOG"; then
     say "Couldn't reach GitHub; will try again tomorrow."
-  elif [[ -n "$(git -C "$REPO_DIR" status --porcelain --untracked-files=no)" ]]; then
-    say "Repo has local edits; skipped the repo update (run update.sh by hand)."
-    result="skipped: local edits in the repo"
-  elif git -C "$REPO_DIR" merge-base --is-ancestor HEAD '@{u}' 2>/dev/null; then
-    git -C "$REPO_DIR" merge -q --ff-only '@{u}' 2>>"$LOG"
-    after="$(git -C "$REPO_DIR" rev-parse HEAD)"
-    if [[ "$before" != "$after" ]]; then
-      changed=1
-      say "Repo: $(git -C "$REPO_DIR" log --oneline "$before..$after" | wc -l) new commit(s), now $(git -C "$REPO_DIR" log --oneline -1)"
-    fi
   else
-    say "Repo can't fast-forward (its history differs from GitHub); skipped. Fix: git -C $REPO_DIR reset --hard @{u}"
-    result="skipped: repo history differs from GitHub"
+    target="origin/$CHANNEL"
+    if ! git -C "$REPO_DIR" rev-parse -q --verify "$target" >/dev/null; then
+      say "No '$CHANNEL' branch on GitHub; following your current branch instead."
+      target="@{u}"
+    fi
+    if [[ -n "$(git -C "$REPO_DIR" status --porcelain --untracked-files=no)" ]]; then
+      say "Repo has local edits; skipped the repo update (run update.sh by hand)."
+      result="skipped: local edits in the repo"
+    elif git -C "$REPO_DIR" merge-base --is-ancestor HEAD "$target" 2>/dev/null; then
+      if [[ "$target" == "@{u}" ]]; then
+        git -C "$REPO_DIR" merge -q --ff-only '@{u}' 2>>"$LOG"
+      else
+        git -C "$REPO_DIR" checkout -q -B "$CHANNEL" "$target" 2>>"$LOG" \
+          && git -C "$REPO_DIR" branch -q -u "$target" "$CHANNEL" 2>>"$LOG"
+      fi
+      after="$(git -C "$REPO_DIR" rev-parse HEAD)"
+      if [[ "$before" != "$after" ]]; then
+        changed=1
+        say "Repo: $(git -C "$REPO_DIR" log --oneline "$before..$after" | wc -l) new commit(s), now $(git -C "$REPO_DIR" log --oneline -1)"
+      fi
+    elif git -C "$REPO_DIR" merge-base --is-ancestor "$target" HEAD 2>/dev/null; then
+      say "Your copy is newer than '$CHANNEL' (you updated by hand); waiting for '$CHANNEL' to catch up."
+      result="waiting: your copy is ahead of $CHANNEL"
+    else
+      say "Repo can't fast-forward to $target (its history differs); skipped. Fix: git -C $REPO_DIR reset --hard $target"
+      result="skipped: repo history differs from GitHub"
+    fi
   fi
 
   # 2. Hermes itself.
-  local do_hermes=0
+  local do_hermes=0 have want
+  have="$(hermes --version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1 | tr -d v)"
+  want="$(cat "$REPO_DIR/HERMES_VERSION" 2>/dev/null || true)"
   case "$HERMES_EVERY" in
+    tested)
+      if [[ -n "$have" && -n "$want" && "$have" != "$want" \
+            && "$(printf '%s\n%s\n' "$have" "$want" | sort -V | tail -1)" == "$want" ]]; then
+        say "This release was tested with Hermes $want; you have $have."
+        do_hermes=1
+      fi ;;
     daily) do_hermes=1 ;;
     weekly) [[ "$(date +%u)" == 7 ]] && do_hermes=1 ;;
   esac

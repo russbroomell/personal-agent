@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Build the workspace (Hermes Desktop in a browser) without running out of
 # memory. Sourced by install-agent.sh and remote-access.sh.
 #

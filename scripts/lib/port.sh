@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Helpers for the workspace port (sourced by remote-access.sh and check.sh).
 #
 # The host gateway can only serve the workspace if nothing else holds its

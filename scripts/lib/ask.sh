@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Yes/no questions for the setup scripts.
 #
 #   ask "Question?" Y   -> Enter means yes   [Y/n]

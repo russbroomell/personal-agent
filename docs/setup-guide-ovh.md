@@ -56,7 +56,7 @@ Use `debian@` on a Debian image. Type `yes` the first time. Your prompt changes 
 
 ```bash
 sudo apt-get update && sudo apt-get install -y git
-git clone https://github.com/russbroomell/personal-agent.git ~/personal-agent
+git clone -b stable https://github.com/russbroomell/personal-agent.git ~/personal-agent
 ```
 
 It's worth skimming `scripts/bootstrap-vps.sh` before running it with sudo: it's about 150 commented lines.

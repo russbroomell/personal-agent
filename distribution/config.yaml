@@ -33,3 +33,10 @@ platforms:
   telegram:
     extra:
       drop_pending_on_cold_boot: false   # don't lose texts sent during a reboot
+
+# Nothing leaves the server except what a reply needs: keep Hermes's
+# optional aggregate metrics off.
+telemetry:
+  shared_metrics:
+    enabled: false
+    send: false

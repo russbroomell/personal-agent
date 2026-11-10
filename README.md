@@ -1,5 +1,7 @@
 # Sidekick (working name)
 
+[![Checks](https://github.com/russbroomell/personal-agent/actions/workflows/checks.yml/badge.svg)](https://github.com/russbroomell/personal-agent/actions/workflows/checks.yml) [![Release](https://img.shields.io/github/v/tag/russbroomell/personal-agent?label=release)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **A personal AI assistant with an actual personality, that you own.**
 
 You text it or talk to it like a sharp, funny assistant. It takes errands, reminders and admin off your plate, watches prices and deadlines, drafts the emails you've been avoiding, and uses its own web browser while you watch (you take over for logins). It runs on **your** server or PC, with **the AI model you choose**, and everything it knows about you is plain text you can read, edit and delete.
@@ -75,7 +77,7 @@ The full guide, with troubleshooting, is **[docs/setup-guide-ovh.md](docs/setup-
 Log in to your server as its default user (`ubuntu` on Ubuntu, `debian` on Debian):
 
 ```bash
-git clone https://github.com/russbroomell/personal-agent.git ~/personal-agent
+git clone -b stable https://github.com/russbroomell/personal-agent.git ~/personal-agent
 sudo bash ~/personal-agent/scripts/bootstrap-vps.sh
 ```
 
@@ -184,7 +186,7 @@ Nothing here is hidden: every step is a readable script in `scripts/`, and each 
 | The **Memory Card** (a tiny Python page, localhost only, with its own secret link) | See and edit every line the bot remembers |
 | Optional: **Tailscale** | A private `https://…ts.net` address that only your own devices can open, so you can see the bot's screen and talk to it without SSH and without opening anything to the internet |
 | Optional: **voices** (Grok's, or free Edge voices) and **local speech recognition** | Voice notes in and out, each character with its own voice |
-| Optional: **nightly auto-update** (a systemd timer) | Pulls improvements from GitHub, updates Hermes weekly, and rolls back by itself if anything breaks |
+| Optional: **nightly auto-update** (a systemd timer) | Installs new releases from the `stable` branch, moves Hermes only to versions a release was tested with, and rolls back by itself if anything breaks |
 
 ### What it costs to run
 
@@ -215,26 +217,28 @@ If a friend already runs Sidekick, they can make you a test-drive bot on their s
 | `distribution/skills/deep-dive/` | Ten 3–5 minute setup interviews, one per area of life |
 | `distribution/skills/*` | First session, onboarding plan, morning brief, watchers, open loops, Friday recap, savings ledger, weekly memory tidy-up, browser hand-off, inbox triage, meeting prep, Memory Card, show-off, share card, kill switch |
 | `templates/notes/` | Starter topic notes, including the onboarding plan |
-| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `guest-bot.sh` (a friend's own test-drive bot), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
+| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `guest-bot.sh` (a friend's own test-drive bot), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `release.sh` (maintainers), `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
 | `docs/setup-guide-ovh.md` | Setup, step by step |
 | `docs/onboarding.md` | How onboarding works, and how a demo carries over to someone's own bot |
 | `docs/voice.md` · `docs/models.md` · `docs/personas.md` | Talking to it · choosing a model · writing a character |
 | `demo/demo-script.md` | A guided test drive: things to try, under the hood, and how to break it |
-| `tests/persona-check.md` | Voice, memory, safety and onboarding checks |
+| `tests/persona-check.md` | Voice, memory, safety and onboarding checks on a real bot |
+| `tests/lint.sh` | Fast checks (shell, skills, config, characters) that GitHub runs on every pull request |
+| `CHANGELOG.md` · `HERMES_VERSION` | What each release changed · the Hermes version it was tested with |
 | `docs/mvp-plan.md`, `docs/plan.md`, `docs/business-plan.md` | Planning notes and research behind the project |
 
 ## How it fits together
 
 - **Personality:** `SOUL.md` = one character + the house rules. The rules (approvals, outside text is data, no bank logins, quiet hours) are identical for every character and every strength.
 - **Memory:** core memory (always loaded), topic notes (read when a subject comes up), and a searchable chat archive. A Sunday job tidies the week into notes. Everything is plain text in the agent's folder.
-- **Updates:** `scripts/auto-update.sh enable` keeps it current with no hands: nightly it pulls this repo (fast-forward only), updates Hermes weekly, refreshes skills and rules, restarts, and rolls back if anything fails. `scripts/update.sh` does the same once, by hand. Neither touches memory, notes, chats, model choice or keys. Auto-update runs whatever lands on the branch it follows, so if you didn't write the repo, point it at your own fork.
+- **Updates and releases:** new work lands on `main`. A release (tagged, with a [changelog](CHANGELOG.md) entry) moves the `stable` branch once it's been tried on a real server, and that's what installs and auto-update follow. Each release records the Hermes version it was tested with in `HERMES_VERSION`. Auto-update moves Hermes only up to that version, and the health check warns if you're ahead of it. `scripts/auto-update.sh enable` checks nightly, refreshes skills and rules, restarts, and rolls back if anything fails; `scripts/update.sh` updates once, by hand, to the newest `main`. Neither touches memory, notes, chats, model choice or keys. Want every change as it lands? `auto-update.sh enable --channel main`. Prefer to review first? Point it at your own fork.
 
 ## Privacy and security
 
 - Your memory and notes stay on your machine. The model provider you choose sees the messages and notes needed for each reply, under its terms; pick one whose API terms exclude training on your data, or run your own model.
 - Only SSH is open to the internet. The workspace and Memory Card are reached through Tailscale (private, password-protected) or an SSH tunnel.
 - Never commit your `.env`, `auth.json`, memories or notes. `.gitignore` blocks the usual ones.
-- Found a security problem? Please open a GitHub issue without exploit details and ask for a private contact, rather than posting the details.
+- Found a security problem? Report it privately: see [SECURITY.md](SECURITY.md). Please don't open a public issue for it.
 
 ## Getting help and reporting problems
 
@@ -246,7 +250,7 @@ Problems in Hermes itself (its installer, gateway or workspace) belong on [Herme
 
 ## Contributing
 
-New characters, deep-dive modules and fixes from real setups are very welcome. Run [tests/persona-check.md](tests/persona-check.md) before opening a pull request that changes skills or characters.
+New characters and deep-dive setups are one Markdown file each, and fixes from real installs are very welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Questions and show-and-tell go in [Discussions](https://github.com/russbroomell/personal-agent/discussions).
 
 ## License
 

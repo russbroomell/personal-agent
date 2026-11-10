@@ -24,7 +24,7 @@ cfg()  { hermes -p "$1" config get "$2" 2>/dev/null | tail -1; }
 PROBLEMS=0
 
 head_ "Server"
-read -r _ total used _ _ _ avail < <(free -m | awk '/^Mem:/')
+read -r _ total _ _ _ _ avail < <(free -m | awk '/^Mem:/')
 read -r _ swap_total swap_used _ < <(free -m | awk '/^Swap:/')
 echo "  memory: ${avail} MB free of ${total} MB; swap used ${swap_used:-0} of ${swap_total:-0} MB; load $(cut -d' ' -f1-3 /proc/loadavg)"
 if [[ "${swap_total:-0}" -ge 3900 ]]; then ok "swap is on (${swap_total} MB)"
@@ -39,6 +39,15 @@ fi
 
 head_ "Hermes"
 if command -v hermes >/dev/null; then ok "hermes $(hermes --version 2>/dev/null | head -1)"; else bad "hermes not installed"; fix "bash ~/personal-agent/scripts/setup.sh"; exit 1; fi
+HAVE_V="$(hermes --version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1 | tr -d v)"
+TESTED_V="$(cat "$(dirname "${BASH_SOURCE[0]}")/../HERMES_VERSION" 2>/dev/null || true)"
+if [[ -n "$HAVE_V" && -n "$TESTED_V" && "$HAVE_V" != "$TESTED_V" ]]; then
+  if [[ "$(printf '%s\n%s\n' "$HAVE_V" "$TESTED_V" | sort -V | tail -1)" == "$HAVE_V" ]]; then
+    meh "Hermes $HAVE_V is newer than this release was tested with ($TESTED_V). It usually works; if something breaks, report it"
+  else
+    meh "Hermes $HAVE_V is older than tested ($TESTED_V)"; fix "hermes update --yes && hermes -p default gateway restart"
+  fi
+fi
 [[ -d "$HH" ]] && ok "profile '$PROFILE' installed" || { bad "profile '$PROFILE' missing"; fix "bash ~/personal-agent/scripts/setup.sh"; }
 
 head_ "Gateway (the 24/7 service)"

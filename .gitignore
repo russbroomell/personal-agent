@@ -23,3 +23,6 @@ distribution/memories/
 distribution/SOUL.md
 distribution/persona.conf
 memory-card.token
+
+__pycache__/
+*.pyc

@@ -2,7 +2,7 @@
 # Sidekick: prepare a fresh VPS (tested target: OVH VPS, 4 GB RAM,
 # Ubuntu 24.04 or Debian 12/13). Run ONCE with sudo:
 #
-#   git clone https://github.com/russbroomell/personal-agent.git ~/personal-agent
+#   git clone -b stable https://github.com/russbroomell/personal-agent.git ~/personal-agent
 #   sudo bash ~/personal-agent/scripts/bootstrap-vps.sh
 #
 # It gives the new "agent" user its own copy of the repo, so it can pull
@@ -142,7 +142,8 @@ if [[ ! -d "$REPO_DST/.git" ]]; then
     cp -a "$REPO_SRC" "$REPO_DST"
     echo "Copied repo to $REPO_DST"
   else
-    sudo -u "$AGENT_USER" git clone "$REPO_URL" "$REPO_DST"
+    sudo -u "$AGENT_USER" git clone -b stable "$REPO_URL" "$REPO_DST" 2>/dev/null \
+      || sudo -u "$AGENT_USER" git clone "$REPO_URL" "$REPO_DST"
     echo "Cloned $REPO_URL to $REPO_DST"
   fi
   chown -R "$AGENT_USER:$AGENT_USER" "$REPO_DST"

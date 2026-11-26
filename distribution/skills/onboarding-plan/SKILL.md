@@ -2,7 +2,7 @@
 name: onboarding-plan
 description: "Keeps track of onboarding across days and devices - the Life Map of areas set up, parked questions, and demo vs test-drive vs live mode - and decides when to bring parked items back. Use when the person skips or postpones a question, says let's continue or pick up where we left off, asks what else you can do, starts a test drive, or when the morning brief needs today's onboarding item."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -54,7 +54,7 @@ Then offer three areas with buttons (see the `deep-dive` skill).
 
 ## Coming back ("let's continue", or a test drive's first message)
 1. Read the plan and core memory.
-2. Welcome them back in two or three lines: their persona and strength,
+2. Welcome them back in two or three lines: who's on their council and the council size,
    what's already set up, and what was parked. Example: "Welcome back. Last
    time we set up Home & car and you parked Money & bills and two questions.
    Want to pick up with money?"

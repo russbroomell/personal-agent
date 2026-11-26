@@ -1,16 +1,18 @@
-name: sidekick
-version: 0.1.0
-description: "A personal assistant with a real personality that you own: your server, your model, your memory."
+name: council
+version: 1.0.0
+description: "A personal assistant with a council of voices from myth and history: one agent, the right voices answer, each in their own voice."
 author: "Russ Broomell"
 license: "MIT"
 
 # Only these paths belong to the distribution. SOUL.md is deliberately NOT
-# listed: scripts/set-persona.sh builds it from the chosen persona plus the
-# house rules, and an update must not wipe that choice. Notes, memories and
-# sessions are user data and are never shipped.
+# listed: skills/council/build-soul.sh builds it from the chair's rules, the
+# seated members and the house rules, and the seats chosen (council.conf)
+# must survive updates. Notes, memories and sessions are user data and are
+# never shipped. plugins/council-voices speaks each member in their voice.
 distribution_owned:
   - config.yaml
   - skills
+  - plugins/council-voices
   - distribution.yaml
 
 env_requires: []

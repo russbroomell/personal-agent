@@ -22,6 +22,7 @@ distribution/notes/
 distribution/memories/
 distribution/SOUL.md
 distribution/persona.conf
+distribution/council.conf
 memory-card.token
 
 __pycache__/

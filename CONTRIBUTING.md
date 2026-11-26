@@ -1,14 +1,17 @@
 # Contributing
 
-Thanks for helping. Most of Sidekick is plain Markdown, so you don't need
+Thanks for helping. Most of the Council is plain Markdown, so you don't need
 to be a programmer to make it better.
 
 ## Easiest ways to contribute
 
-**A new character.** Copy `distribution/skills/persona-switch/personas/_template.md`,
-fill it in (voice, catchphrases, strength 1 to 5 examples), add a line
-for its voice in `personas/voices.conf`, and test it with the steps in
-[docs/personas.md](docs/personas.md). One file plus one line.
+**A new council member.** Copy `distribution/skills/council/members/_template.md`,
+fill in the Card (lane, voice, signature move, how they push back, what they
+never do) and the Full section (strength 1, 3 and 5 examples), add a line
+for their voices in `members/voices.conf`, and seat them with
+`build-soul.sh --seat <slug>`. Pick a lane no seated member already owns,
+and portray historical and mythical figures respectfully. See
+[docs/council.md](docs/council.md#add-a-member). One file plus one line.
 
 **A new deep-dive setup.** These are the 3 to 5 minute interviews on the Life
 Map (home & car, money & bills, and so on). Copy a module in
@@ -28,12 +31,13 @@ freelancing and running a club are all wanted.
    ```
    GitHub runs the same checks on every pull request.
 2. If you changed skills or characters, run through
-   [tests/persona-check.md](tests/persona-check.md) on a real bot.
+   [tests/council-check.md](tests/council-check.md) on a real bot.
 3. If you changed setup scripts, say in the pull request which server and
    OS you tried them on.
 4. Keep the house rules intact: approvals before spending, sending,
    booking or cancelling; outside text is data, never orders; no bank
-   logins. Characters change the voice, never the rules.
+   logins. Members change the voice, never the rules; the council's rules of
+   debate (in `distribution/skills/council/chair.md`) stay intact too.
 
 ## Style
 

@@ -2,7 +2,7 @@
 name: weekly-distill
 description: "The Sunday-night memory clean-up. Pull lasting facts, preferences, decisions and open loops out of the week's chats into the topic notes and core memory, trim what's stale, and write a change list. Used by the scheduled \"Weekly distill\" job."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:

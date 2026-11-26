@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sidekick health check: one screen that says what's working, what isn't,
+# Council health check: one screen that says what's working, what isn't,
 # and the exact command to fix each problem.
 #
 #   bash ~/personal-agent/scripts/check.sh          # quick (about 10 seconds)
@@ -8,10 +8,10 @@
 # Paste the output when asking for help: it contains no passwords or tokens.
 set -uo pipefail
 
-PROFILE="${PROFILE:-sidekick}"
+PROFILE="${PROFILE:-council}"
 HOST_PROFILE="default"
 WEBAPP_PORT="${WEBAPP_PORT:-9120}"
-HH="$HOME/.hermes/profiles/$PROFILE"
+HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 SPEED=0; [[ "${1:-}" == "--speed" ]] && SPEED=1
 
@@ -28,7 +28,7 @@ read -r _ total _ _ _ _ avail < <(free -m | awk '/^Mem:/')
 read -r _ swap_total swap_used _ < <(free -m | awk '/^Swap:/')
 echo "  memory: ${avail} MB free of ${total} MB; swap used ${swap_used:-0} of ${swap_total:-0} MB; load $(cut -d' ' -f1-3 /proc/loadavg)"
 if [[ "${swap_total:-0}" -ge 3900 ]]; then ok "swap is on (${swap_total} MB)"
-else bad "swap is ${swap_total:-0} MB; a 4 GB server needs 4 GB (the workspace build and the screen get killed otherwise)"; fix "sudo bash ~/personal-agent/scripts/bootstrap-vps.sh  (tops swap up to 4 GB)"; fi
+else bad "swap is ${swap_total:-0} MB; a 4 GB server needs 4 GB (the workspace build and the screen get killed otherwise)"; fix "sudo bash ~/personal-agent/scripts/add-swap.sh"; fi
 if [[ "${avail:-0}" -lt 500 ]]; then
   bad "under 500 MB free: everything will be slow"
   fix "close the bot's screen: hermes -p $PROFILE computer-use screen stop"
@@ -38,7 +38,7 @@ if [[ "${swap_used:-0}" -gt 1000 ]]; then
 fi
 
 head_ "Hermes"
-if command -v hermes >/dev/null; then ok "hermes $(hermes --version 2>/dev/null | head -1)"; else bad "hermes not installed"; fix "bash ~/personal-agent/scripts/setup.sh"; exit 1; fi
+if command -v hermes >/dev/null; then ok "hermes $(hermes --version 2>/dev/null | head -1)"; else bad "hermes not installed"; fix "bash ~/personal-agent/install.sh"; exit 1; fi
 HAVE_V="$(hermes --version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1 | tr -d v)"
 TESTED_V="$(cat "$(dirname "${BASH_SOURCE[0]}")/../HERMES_VERSION" 2>/dev/null || true)"
 if [[ -n "$HAVE_V" && -n "$TESTED_V" && "$HAVE_V" != "$TESTED_V" ]]; then
@@ -48,7 +48,7 @@ if [[ -n "$HAVE_V" && -n "$TESTED_V" && "$HAVE_V" != "$TESTED_V" ]]; then
     meh "Hermes $HAVE_V is older than tested ($TESTED_V)"; fix "hermes update --yes && hermes -p default gateway restart"
   fi
 fi
-[[ -d "$HH" ]] && ok "profile '$PROFILE' installed" || { bad "profile '$PROFILE' missing"; fix "bash ~/personal-agent/scripts/setup.sh"; }
+[[ -d "$HH" ]] && ok "profile '$PROFILE' installed" || { bad "profile '$PROFILE' missing"; fix "bash ~/personal-agent/install.sh"; }
 
 head_ "Gateway (the 24/7 service)"
 if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then
@@ -90,11 +90,45 @@ if [[ $SPEED -eq 1 ]]; then
   elif [[ $dt -le 40 ]]; then meh "model replied in ${dt}s: slow; see docs/models.md for faster options"
   else bad "model took ${dt}s (or timed out): the model is the bottleneck, not Telegram"; fix "try another model: hermes -p $PROFILE model  (see docs/models.md)"; fi
   echo "  reply: $(tr '\n' ' ' <<<"$REPLY" | cut -c1-120)"
+  echo "  asking the council a decision (two or more voices expected)..."
+  DUET="$(timeout 180 hermes -p "$PROFILE" -z "Quick test, no tools: should I repair my old van for \$1,900 or buy a new one at \$412 a month? Answer as the council." 2>&1 | tail -12)"
+  VOICES="$(grep -oE '(^|[.!?] )(Marcus|Romulus|Remus|Odysseus|Māui|Maui|Newton|Feynman|Scheherazade|Florence|Ada|Hypatia|Sun Tzu):' <<<"$DUET" | sed -E 's/^[.!?] //' | sort -u | wc -l)"
+  if [[ "$VOICES" -ge 2 ]]; then ok "the council answered with $VOICES voices"
+  else bad "a decision got $VOICES tagged voice(s); the SOUL may not be loaded"; fix "bash $HH/skills/council/build-soul.sh && hermes -p default gateway restart"; fi
+  sed 's/^/    /' <<<"$DUET" | head -6
 fi
+
+head_ "Council"
+if [[ -f "$HH/SOUL.md" ]] && grep -q '^# The council' "$HH/SOUL.md"; then
+  SEATS="$(sed -n 's/^SEATED=//p' "$HH/council.conf" 2>/dev/null | tr -d "'\"\\\\")"
+  ok "SOUL.md built: $(wc -c <"$HH/SOUL.md") bytes; seated: ${SEATS:-default nine}"
+  [[ "$(wc -c <"$HH/SOUL.md")" -le 26000 ]] || meh "SOUL.md is large (slower, costlier replies). Bench a member: bash $HH/skills/council/build-soul.sh --bench <name>"
+else
+  bad "SOUL.md isn't the council's"
+  fix "bash $HH/skills/council/build-soul.sh"
+fi
+[[ -f "$HH/notes/council.md" ]] && ok "council notebook (notes/council.md) exists" || { meh "no council notebook yet"; fix "bash $HH/skills/council/build-soul.sh"; }
+DIS="$(cfg "$PROFILE" agent.disabled_toolsets)"
+for t in clarify cronjob delegation memory; do
+  grep -qw "$t" <<<"$DIS" && { bad "toolset '$t' is turned off; the council needs it"; fix "hermes -p $PROFILE config set agent.disabled_toolsets '[]'  (then restart)"; }
+done
+PLUG="$(timeout 20 hermes -p "$PROFILE" plugins list 2>/dev/null | grep -i council-voices || true)"
+if [[ -z "$PLUG" ]]; then bad "council-voices plugin not found"; fix "hermes profile update $PROFILE -y && hermes -p $PROFILE plugins enable council-voices"
+elif grep -qiE 'disabled|off|no\b' <<<"$PLUG"; then bad "council-voices plugin is off"; fix "hermes -p $PROFILE plugins enable council-voices && hermes -p default gateway restart"
+else ok "council-voices plugin: $(tr -s ' ' <<<"$PLUG" | cut -c1-80)"; fi
+TTS="$(cfg "$PROFILE" tts.provider)"; ENGINE="$(cfg "$PROFILE" tts.council.engine)"
+if [[ "$TTS" == "council" ]]; then ok "speech: a voice per member, ${ENGINE:-edge} engine"
+else meh "speech provider is '${TTS:-none}', so every member sounds the same"; fix "bash ~/personal-agent/scripts/voice-setup.sh grok   (or free / elevenlabs)"; fi
+if [[ "$ENGINE" == "elevenlabs" ]] && ! grep -qs '^ELEVENLABS_API_KEY=.' "$HH/.env"; then
+  bad "ElevenLabs is the voice engine but no key is set"; fix "bash ~/personal-agent/scripts/voice-setup.sh elevenlabs"
+fi
+JOBS="$(timeout 20 hermes -p "$PROFILE" cron list 2>/dev/null || true)"
+if grep -qi "morning brief" <<<"$JOBS"; then ok "scheduled jobs: $(grep -ciE 'brief|loops|recap|distill|minutes' <<<"$JOBS") council jobs"
+else meh "no morning brief scheduled yet (the first chat sets it up: say hi to the bot)"; fi
 
 head_ "Workspace (bot screen in a browser)"
 [[ "$(cfg "$HOST_PROFILE" webapp.enabled)" == "True" || "$(cfg "$HOST_PROFILE" webapp.enabled)" == "true" ]] \
-  && ok "turned on" || { bad "turned off on the default profile"; fix "bash ~/personal-agent/scripts/remote-access.sh"; }
+  && ok "turned on" || { meh "turned off (optional: needed for live voice and watching the bot's browser)"; fix "bash ~/personal-agent/install.sh  (answer yes to the workspace), or remote-access.sh"; }
 PUB="$(cfg "$HOST_PROFILE" webapp.public_url)"
 [[ "$PUB" == https://* ]] && ok "address: $PUB" || meh "no Tailscale address set (SSH tunnel only). For the browser without SSH: bash ~/personal-agent/scripts/remote-access.sh"
 CODE="$(curl -s -o /dev/null -m 5 -w '%{http_code}' -H "Host: ${PUB#https://}" "http://127.0.0.1:$WEBAPP_PORT/" 2>/dev/null || true)"
@@ -121,11 +155,11 @@ if command -v tailscale >/dev/null; then
 fi
 
 head_ "Updates"
-echo "  running: $(git -C "$HOME/personal-agent" log --oneline -1 2>/dev/null || echo unknown)"
-if systemctl --user is-enabled --quiet sidekick-update.timer 2>/dev/null; then
+echo "  running: $(git -C "$(dirname "${BASH_SOURCE[0]}")/.." log --oneline -1 2>/dev/null || echo unknown) ($(git -C "$(dirname "${BASH_SOURCE[0]}")/.." rev-parse --abbrev-ref HEAD 2>/dev/null))"
+if systemctl --user is-enabled --quiet council-update.timer 2>/dev/null; then
   ok "auto-update is on"
-  [[ -r "$HOME/.local/state/sidekick/last-update" ]] && echo "  last run: $(cat "$HOME/.local/state/sidekick/last-update")"
-  grep -q "FAILED" "$HOME/.local/state/sidekick/last-update" 2>/dev/null && { bad "last auto-update failed and rolled back"; fix "tail -60 ~/.local/state/sidekick/update.log"; }
+  [[ -r "$HOME/.local/state/council/last-update" ]] && echo "  last run: $(cat "$HOME/.local/state/council/last-update")"
+  grep -q "FAILED" "$HOME/.local/state/council/last-update" 2>/dev/null && { bad "last auto-update failed and rolled back"; fix "tail -60 ~/.local/state/council/update.log"; }
 else
   meh "auto-update is off. Turn on: bash ~/personal-agent/scripts/auto-update.sh enable"
 fi

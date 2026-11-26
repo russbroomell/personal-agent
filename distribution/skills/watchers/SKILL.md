@@ -2,7 +2,7 @@
 name: watchers
 description: "Watch something for the person - a flight, a package, a price, a web page, a reply they're waiting on - and ping only when it changes. Use when they say \"watch\", \"keep an eye on\", \"tell me when\", and in each watcher's scheduled check."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -37,7 +37,7 @@ File: watchers.md in the notes folder. One block per watch:
 2. Check the source (public pages only; never log in during a check; if a
    login is needed, note it and tell your person once).
 3. If the trigger is met, or something they'd clearly care about changed:
-   reply with one or two lines in your persona's voice, with the link and an
+   reply with one or two lines in the council's voice (usually one member, the one whose lane fits), with the link and an
    offer ("Dishwasher dropped to $879. Want me to send you the link to buy?
    I won't buy it myself."). Update "Last seen".
 4. Otherwise update "Last seen" and reply with exactly `[SILENT]`.

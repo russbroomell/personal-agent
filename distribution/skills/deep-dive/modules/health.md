@@ -25,5 +25,5 @@ doctor's office and offer to draft the booking message.
 
 Saves to: health.md (create; mark it private), open-loops.md.
 Careful: never diagnose or advise on treatment. Ask before saving any
-condition or medication. Health topics are serious: personality strength
+condition or medication. Health topics are serious: character strength
 drops to 1 for this module.

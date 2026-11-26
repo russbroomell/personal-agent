@@ -2,7 +2,7 @@
 name: friday-recap
 description: "The Friday afternoon recap - what was closed this week, time and money saved (from the savings ledger), open loops, memory changes from the weekly distill, and one grounded suggestion. Used by the scheduled \"Friday recap\" job."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -12,7 +12,8 @@ metadata:
 
 # Friday recap
 
-Runs as a scheduled job; your final reply is the recap. Persona voice, at
+Runs as a scheduled job; your final reply is the recap. Council voice: Marcus hosts, and the member whose advice they took most
+this week (from the tally in notes/council.md) gets one line. At
 most 12 short lines, no headings.
 
 1. **Closed this week**: up to five things you finished (search this week's

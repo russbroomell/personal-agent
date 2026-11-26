@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Build the workspace (Hermes Desktop in a browser) without running out of
-# memory. Sourced by install-agent.sh and remote-access.sh.
+# memory. Sourced by install.sh and remote-access.sh.
 #
 # The build (Node) can need several GB at peak. On a 4 GB server with the bot's
 # screen and Chrome running, the kernel kills it partway through. So: free
@@ -20,7 +20,7 @@ build_workspace() {   # build_workspace <host-profile> <bot-profile>
   echo "Memory available for the build: ${head} MB (RAM + swap)."
   if [[ "$head" -lt 3000 ]]; then
     echo "!! That's tight; the build may be killed. Add swap with:"
-    echo "     sudo bash ~/personal-agent/scripts/bootstrap-vps.sh   (tops swap up to 4 GB)"
+    echo "     sudo bash ~/personal-agent/scripts/add-swap.sh"
   fi
   if hermes -p "$host" webapp --build-only; then
     return 0
@@ -29,6 +29,6 @@ build_workspace() {   # build_workspace <host-profile> <bot-profile>
   sleep 5
   hermes -p "$host" webapp --build-only && return 0
   echo "!! Workspace build failed twice. Free memory now: $(mem_headroom_mb) MB (RAM + swap)."
-  echo "   If that's under 3000, add swap (sudo bash ~/personal-agent/scripts/bootstrap-vps.sh), then re-run."
+  echo "   If that's under 3000, add swap (sudo bash ~/personal-agent/scripts/add-swap.sh), then re-run."
   return 1
 }

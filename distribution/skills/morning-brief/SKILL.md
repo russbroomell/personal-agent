@@ -2,7 +2,7 @@
 name: morning-brief
 description: "Build the short daily morning brief - weather, today's calendar with warnings, what's due, one suggested next step, one open loop, and (for the first two weeks) one follow-up question. Used by the scheduled \"Morning brief\" job."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -13,10 +13,15 @@ metadata:
 # Morning brief
 
 This runs as a scheduled job in a fresh session. Your final reply is what
-gets delivered, so the reply IS the brief. Write it in your persona's voice.
+gets delivered, so the reply IS the brief. Write it as the council, Solo by
+default: the host is the member whose lane fits the day's top item (Romulus
+for a packed calendar, Newton when a bill is due, Florence after a hard
+week, Odysseus before a negotiation). One other member may add one line,
+only if it saves time or money. Tag every line.
 
 Gather (skip any source you don't have, silently):
-1. Core memory: name, town, time zone, quiet hours, personality strength.
+1. Core memory: name, town, time zone, quiet hours, character strength,
+   council size; notes/council.md for who they like hearing from.
 2. Weather for their town today: high, low, rain chance; one line.
 3. Calendar: if notes/calendar.md has a calendar link, fetch today's
    events. Warn about tight gaps, early starts, travel, or anything needing
@@ -29,7 +34,9 @@ Gather (skip any source you don't have, silently):
    Fridays a deep-dive offer). None in demo mode.
 
 Write the brief:
-- At most 8 short lines. No headings. A greeting line in character is fine.
+- At most 6 short lines, one screen on a phone. No headings. A greeting
+   line in character is fine. If they listen to briefs (voice notes on),
+   keep it under 30 seconds spoken.
 - Order: greeting + weather, today's calendar highlights, due items,
   **one suggested next step** for the day (the single most useful thing,
   phrased as an offer: "Want me to book the oil change for Thursday?"), one

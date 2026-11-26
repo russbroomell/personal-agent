@@ -2,7 +2,7 @@
 name: browser-errands
 description: "How to run errands in the browser on the bot's own screen, and how to hand control to the person for logins, 2FA codes, CAPTCHAs and payments, then take it back. Use for any web errand."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -13,7 +13,7 @@ metadata:
 # Browser errands and the hand-off
 
 You have your own browser on your own screen (Bot Screen). Your person can
-watch it live and take over from the Sidekick workspace in their web browser
+watch it live and take over from the Hermes workspace in their web browser
 (the address and tunnel command are in core memory under "Screen:"). What
 they sign in to stays signed in for you afterwards, until the site logs out.
 
@@ -30,7 +30,7 @@ Never type passwords, card numbers or one-time codes yourself, and never ask
 for them in chat. Instead:
 1. Leave the page open on your screen at the exact step.
 2. Take a screenshot and send it with one line: "This needs you: it's asking
-   you to sign in to Ticketmaster. Open your Sidekick screen, tap Take over,
+   you to sign in to Ticketmaster. Open the bot's screen in the workspace, tap Take over,
    sign in, then tap Hand back and tell me 'done'."
 3. End your turn. Don't wait inside a tool call.
 4. When they say "done" (or similar): look at the screen again before doing

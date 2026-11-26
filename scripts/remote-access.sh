@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Sidekick: see the bot's browser, the workspace and the Memory Card from
+# The Council: see the bot's browser, the workspace and the Memory Card from
 # any of your devices (laptop or phone), with no SSH tunnel.
 #
 #   bash ~/personal-agent/scripts/remote-access.sh
 #
 # How: Tailscale puts the VPS on your private network (your "tailnet") and
-# gives it an HTTPS address like https://sidekick-vps.tail1234.ts.net that
+# gives it an HTTPS address like https://council-vps.tail1234.ts.net that
 # only devices signed in to YOUR Tailscale account can open. Nothing is
 # opened to the public internet. The workspace also asks for a username
 # and password.
@@ -14,7 +14,7 @@
 # on each device you'll view from (laptop, phone), signed in to that account.
 set -euo pipefail
 
-PROFILE="${PROFILE:-sidekick}"
+PROFILE="${PROFILE:-council}"
 # Hermes runs one gateway per machine from its default profile (the "host"),
 # serving every profile. The workspace, its address and its password are read
 # from the host's settings, so they are set on the default profile.
@@ -23,15 +23,15 @@ WEBAPP_PORT="${WEBAPP_PORT:-9120}"
 MC_PORT="${MC_PORT:-8765}"
 WEB_USER="${WEB_USER:-$(id -un)}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HH="$HOME/.hermes/profiles/$PROFILE"
+HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!! %s\033[0m\n' "$*" >&2; }
 die()  { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
 
-[[ $EUID -ne 0 ]] || die "Run as your normal user (e.g. 'agent'); it uses sudo where needed."
-[[ -d "$HH" ]] || die "Profile $PROFILE isn't installed. Run scripts/install-agent.sh first."
+SUDO="sudo"; [[ $EUID -eq 0 ]] && SUDO=""   # root works too (some Hermes images run as root)
+[[ -d "$HH" ]] || die "Profile $PROFILE isn't installed. Run install.sh first."
 command -v hermes >/dev/null || die "hermes not on PATH."
 
 cat <<'INTRO'
@@ -55,16 +55,16 @@ read -r -p "Press Enter to start (Ctrl+C to stop)... " _ </dev/tty || true
 # --------------------------------------------------------------- Tailscale
 if ! command -v tailscale >/dev/null 2>&1; then
   say "Installing Tailscale"
-  curl -fsSL https://tailscale.com/install.sh | sh
+  curl -fsSL https://tailscale.com/install.sh | $SUDO sh
 fi
 
 if ! tailscale status >/dev/null 2>&1; then
   say "Step 1 of 4: connect this server to your Tailscale account"
   echo "A login link will appear below. Open it on any device, sign in, and"
   echo "approve this server. The script waits here until you do."
-  sudo tailscale up --operator="$(id -un)" --hostname="${TS_HOSTNAME:-sidekick-vps}"
+  $SUDO tailscale up --operator="$(id -un)" --hostname="${TS_HOSTNAME:-council-vps}"
 else
-  sudo tailscale set --operator="$(id -un)" >/dev/null 2>&1 || true
+  $SUDO tailscale set --operator="$(id -un)" >/dev/null 2>&1 || true
 fi
 
 TS_NAME="$(tailscale status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')"
@@ -72,8 +72,10 @@ TS_NAME="$(tailscale status --json | python3 -c 'import json,sys; print(json.loa
 echo "Tailscale name: $TS_NAME"
 
 say "Firewall: allow traffic that arrives over Tailscale only"
-sudo ufw allow in on tailscale0 >/dev/null
-sudo ufw status | grep -i tailscale0 | head -2 || true
+if command -v ufw >/dev/null 2>&1; then
+  $SUDO ufw allow in on tailscale0 >/dev/null
+  $SUDO ufw status | grep -i tailscale0 | head -2 || true
+fi
 
 say "Step 2 of 4: private HTTPS addresses"
 echo "If Tailscale prints a link saying Serve or HTTPS isn't enabled, open it,"
@@ -118,7 +120,7 @@ say "Step 4 of 4: turning the workspace on at its Tailscale address"
 #   a built bundle  - otherwise it says "The Webapp is not built"
 #   webapp.public_url = this exact https name - otherwise every request gets
 #                     "Invalid Host header" (Hermes only answers to names it was told about)
-# all on the DEFAULT profile (set on sidekick they're silently ignored), and
+# all on the DEFAULT profile (set on the bot profile they're silently ignored), and
 # the host gateway must restart afterwards to pick them up.
 hermes -p "$HOST_PROFILE" config set webapp.enabled true >/dev/null
 hermes -p "$HOST_PROFILE" config set webapp.host 127.0.0.1 >/dev/null
@@ -128,7 +130,7 @@ echo "Checking the workspace is built (first time: a few minutes)..."
 # shellcheck source=lib/build.sh
 source "$REPO_DIR/scripts/lib/build.sh"
 build_workspace "$HOST_PROFILE" "$PROFILE" || die "Workspace build failed (see above). Fix it, then re-run this script."
-# Older installs created a sidekick-only gateway service; it fights the host
+# Older installs created a profile-only gateway service; it fights the host
 # gateway for the same bot and port. Remove it if present.
 if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then
   echo "Removing the old $PROFILE-only gateway service (the host gateway runs $PROFILE now)..."
@@ -170,7 +172,7 @@ fi
 
 # ------------------------------------------------ Memory Card over Tailscale
 say "Memory Card over Tailscale"
-UNIT="sidekick-memory-card-$PROFILE.service"
+UNIT="council-memory-card-$PROFILE.service"
 DROPIN="$HOME/.config/systemd/user/$UNIT.d"
 mkdir -p "$DROPIN"
 cat > "$DROPIN/tailscale.conf" <<EOF

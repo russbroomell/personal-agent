@@ -1,6 +1,6 @@
 # The Council: Plan
 
-Nov 26, 2026 · @Russ Broomell · branch `romulus-remus` · status: **draft for review**
+Nov 26, 2026 · @Russ Broomell · branch `romulus-remus` · status: **built on this branch; not yet tried on a real Hermes box**
 
 One personal agent, many minds. You message it like any assistant. Behind the reply sits a small council of characters from myth and history, each with a lane. A chair decides who speaks. Most replies are one voice, decisions get two or three, and nobody makes you call them separately.
 
@@ -106,14 +106,14 @@ Most of this already exists on `main` and carries over unchanged.
 | What | How | Status |
 | --- | --- | --- |
 | Nightly updates with rollback | `auto-update.sh` (systemd timer): follows `stable`, pins Hermes to `HERMES_VERSION`, runs the health check, rolls back on failure | Reuse |
-| Health check with fixes | `check.sh`, plus new checks: council plugin on, SOUL built, every member has a voice, SOUL size under budget | Extend |
+| Health check with fixes | `check.sh`, plus new checks: council plugin on, SOUL built and under budget, speech provider, needed toolsets on, scheduled jobs, and (`--speed`) a test decision that must get two or more voices | Done |
 | Keep the user's choices across updates | `council.conf` (roster, chair, size, names) lives outside the files the distribution owns; `build-soul.sh` rebuilds SOUL after every update | Extend from `persona.conf` |
 | Snapshots and reset | `reset-agent.sh --snapshot`, `backup.sh` | Reuse; add a nightly snapshot to the timer |
 | CI on every PR | `tests/lint.sh`, plus council lint: every persona has a card, lanes, voices and a strength dial, and the SOUL stays under its size limit; plugin unit tests | Extend |
 | Behaviour regression | `tests/council-check.md`: about 15 golden prompts (routine, decision, serious, "just Newton", approval inside a Council reply) run against a real bot after a Hermes bump | New |
 | Self-tuning, weekly | A Sunday "council minutes" job: reads `notes/council.md` (whose advice you took, what you benched or muted), adjusts the lane weights and banter level, and tells you in one line in the Friday recap. It changes only `notes/council.md`, never skills or rules | New |
 | Skills don't rot | Hermes Curator for skills the agent writes; locked core skills (`skills.write_approval`) | Reuse |
-| Upgrade path from `main` | `install.sh` detects an existing Sidekick profile and offers to migrate memory and notes into the council profile | New |
+| Upgrade path from `main` | `install.sh` detects an existing Sidekick profile and offers to copy its memory and notes into the council profile (`--migrate-from`) | Done |
 
 ## 4. A good experience: voice first, little text
 
@@ -138,59 +138,36 @@ Most of this already exists on `main` and carries over unchanged.
 - Cameos and crossovers carry over from `main`, now with the whole council.
 - Share cards of a good council exchange (existing `share-card` skill).
 
-## 5. What gets built in the repo
+## 5. Decisions (Nov 26)
 
-The new version replaces the six-character persona system **on this branch only**; `main` keeps it.
+| Question | Decision |
+| --- | --- |
+| Roster | As proposed: nine seated, Ada, Hypatia and Sun Tzu on the bench |
+| The six characters from `main` | Replaced on this branch; `main` keeps them |
+| Name | The Council; Hermes profile `council` |
+| Voice scope | Telegram voice notes and live browser voice now; a phone number later |
 
-```
-install.sh                         # one command on a box that already runs Hermes
-distribution/
-  distribution.yaml, config.yaml   # profile "council"; enables the toolsets it needs
-  plugins/council-voices/          # from twin-voices, N speakers
-  skills/council/
-    SKILL.md                       # roster changes, size, mute/bench, cameo, convene
-    members/*.md                   # full persona files (+ _template.md)
-    cards/*.md                     # short cards that go into SOUL
-    voices.conf                    # member → grok / edge / elevenlabs voice
-    house-rules.md                 # main's rules + the council guardrails above
-    build-soul.sh                  # SOUL = chair routing + cards + house rules
-  skills/convene/                  # full council via delegate_task
-  skills/first-session/            # rewritten for the 5-minute council onboarding
-  skills/council-minutes/          # weekly self-tuning
-  skills/...                       # morning-brief, open-loops, watchers, deep-dive, etc. (reused)
-scripts/
-  council/doctor.sh                # checks + fixes (wraps check.sh)
-  auto-update.sh, backup.sh, reset-agent.sh, voice-setup.sh (reused, adapted)
-templates/notes/council.md         # size, banter, benched, tally
-tests/council-lint.sh, tests/council-check.md, tests/council_voices/
-docs/council.md                    # how it works, for users
-```
+## 6. What was built
 
-### What `install.sh` does on an existing Hermes computer
+| Plan item | Where | Notes |
+| --- | --- | --- |
+| Members (Card + Full in one file each) | `distribution/skills/council/members/` | 12 members and a template; lint enforces 5–8 card bullets, a unique tag, voices and a strength dial |
+| Chair's routing and rules of debate | `distribution/skills/council/chair.md` | The top of every SOUL |
+| House rules | `distribution/skills/council/house-rules.md` | From `main`, plus stricter length rules, the voice-first section and council hand-offs |
+| SOUL builder | `distribution/skills/council/build-soul.sh` | `--seat`, `--bench`, `--roster`, `--name`, `--list`; Marcus can't be benched; about 18 KB with nine seated (budget 26 KB) |
+| Council skill | `distribution/skills/council/SKILL.md` | Roster, size, cameos, debates, new members |
+| Full council | `distribution/skills/convene/` | `delegate_task` in parallel; falls back to sequential thinking if delegation is off |
+| Weekly self-tuning | `distribution/skills/council-minutes/` | Changes only the notebook and council size; suggests roster changes |
+| Onboarding | `distribution/skills/first-session/` | Six questions; schedules five jobs |
+| Voices | `distribution/plugins/council-voices/` | Generalized twin-voices; 26 unit tests |
+| Installer | `install.sh` | The planned `--into` became `--migrate-from` (copying memory is safer than adopting a profile in place) |
+| Doctor | `scripts/check.sh` | Extended in place rather than a new `doctor.sh` |
+| Docs | `README.md`, `docs/council.md`, `docs/voice.md` | |
+| Behaviour checks | `tests/council-check.md` | About 40 prompts |
 
-The script assumes Hermes is installed and a model is configured. It is safe to run again.
+**Not yet verified:** the Hermes docs site wasn't reachable while this was built, so these rest on the commands `main`'s scripts already use and on the earlier `twin-voices` work (tested with Hermes 0.23.4):
+- `hermes config set` with a JSON object (`build-soul.sh` falls back to one key at a time);
+- `delegate_task` being in the default toolsets (`config.yaml` sets `agent.disabled_toolsets: []`);
+- copying the `model:` block and `.env` from the default profile being enough for the new profile to use the existing model (if not, `install.sh` runs `hermes -p council model`).
 
-1. **Pre-flight.** Checks for `hermes` on PATH, that the version is at least the one in `HERMES_VERSION` (warns if it's ahead), that a model is configured (if not, offers `hermes model`), and that `python3`, `ffmpeg` and `git` are present (offers `sudo apt-get install` for anything missing).
-2. **Install or update the `council` profile** from `distribution/` (`hermes profile install` / `update`). With `--into <profile>`, it adopts an existing profile instead, after a backup.
-3. **Turn on what it needs:** the toolsets (clarify, cronjob, memory, delegation, browser, tts/stt), the council-voices plugin, and `tts.provider council` on the chosen voice engine. Each one is a yes/no question, like `main`'s scripts.
-4. **Build the SOUL** from `council.conf` (default roster), seed the notes and starter core memory, and lock the core skills.
-5. **Messaging:** detects an existing Telegram (or other) gateway on the box and offers to reuse it or set up a new bot.
-6. **Voice:** grok / free / elevenlabs / skip (`voice-setup.sh`).
-7. **Auto-update** on (yes/no).
-8. **Restart the gateway and run the doctor:** ✓ and ✗ results with `fix:` lines, and a timed test reply where two members speak.
-9. **Finish:** "Say hi to your bot."
-
-Flags: `--yes` (take every recommended answer), `--profile NAME`, `--into PROFILE`, `--voice grok|free|elevenlabs|skip`, `--no-update`.
-
-### Build order
-
-1. **Council core:** members, cards, house rules with guardrails, `build-soul.sh`, council skill, lint. *(Testable in `hermes -p council` chat.)*
-2. **`install.sh` + doctor** on a fresh Hermes box.
-3. **council-voices plugin** (generalize twin-voices, tests) and `voice-setup.sh` support.
-4. **First session** (5-minute council onboarding) and drip wiring.
-5. **Convene** (full council) and **council minutes** (self-tuning).
-6. **Docs, golden-prompt checks, README** for this branch.
-
-## Open questions
-
-See the questions in the conversation that started this branch. The answers change the roster, the name, the voice scope, and whether the old characters stay.
+Run `tests/council-check.md` on a real box before release.

@@ -2,7 +2,7 @@
 name: open-loops
 description: "Track things the person mentions but hasn't finished (\"I need to call the furnace guy\"), plus things the assistant promised to do, and nudge once at a sensible time. Use whenever a loop opens or closes, and in the daily \"Open loops check\" job."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -28,7 +28,7 @@ In the daily check (scheduled job, fresh session):
 - Do any "mine" loops you can do without approval; for anything needing
   approval, include a one-line ask.
 - For "theirs" loops whose nudge date is today: one gentle nudge each, in
-  your persona's voice, at most two in total. Offer to do it for them.
+  the council's voice (usually one member), at most two in total. Offer to do it for them.
 - Respect quiet hours and protected time. If nothing needs saying, reply
   with exactly `[SILENT]` so nothing is sent.
 - Archive closed loops older than 30 days.

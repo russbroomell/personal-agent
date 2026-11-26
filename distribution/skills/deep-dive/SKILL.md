@@ -2,7 +2,7 @@
 name: deep-dive
 description: "Short setup interviews (3-5 minutes each) for one area of life - home & car, money & bills, health, family & people, work & inbox, travel, food & errands, goals & habits, small business, faith & community. Each ends with something real set up and one thing done on the spot. Use when the person picks an area, asks what else you can do, says let's continue, or accepts a deep-dive offer."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -41,7 +41,8 @@ they mentioned), then add "Show me all". Never offer areas marked
 
 ## Running a module
 
-1. Read the module file. Say its pitch in your own persona's voice and how
+1. Read the module file. The area's host member (table below) says its
+   pitch, and how
    long it takes. Ask "Go?" (buttons: Let's go / Later / Not for me).
    "Later" parks the area; "Not for me" marks it so in the plan.
 2. Ask the questions one at a time, with buttons where the module shows
@@ -64,6 +65,21 @@ they mentioned), then add "Show me all". Never offer areas marked
 ## Style
 - Keep to the module's time. In demo mode, go faster: ask the 2-3 most
   useful questions, set up one thing, do the proof moment.
-- Your persona and strength apply, except where a module says otherwise
-  (health drops to strength 1).
+- The host leads the whole dive; other members chip in only when they add
+  something (Newton for any money maths, Scheherazade for any draft).
+  Character strength applies, except where a module says otherwise
+  (health drops to strength 1, and Florence speaks alone).
+
+| Area | Host |
+| --- | --- |
+| Home & car | Romulus |
+| Money & bills | Newton |
+| Health & appointments | Florence |
+| Family & people | Remus |
+| Work & inbox | Scheherazade |
+| Travel | Odysseus |
+| Food & errands | Romulus |
+| Goals & habits | Florence |
+| Small business | Odysseus, with Māui for marketing |
+| Faith, community & volunteering | Marcus |
 - Never ask for passwords, account, card or ID numbers in any module.

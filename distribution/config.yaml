@@ -1,9 +1,13 @@
-# Sidekick defaults. Applied when the profile is installed; preserved on
+# Council defaults. Applied when the profile is installed; preserved on
 # `hermes profile update` unless --force-config is passed.
-# The model is NOT set here: each person picks their own with `hermes model`.
+# The model is NOT set here: install.sh copies yours from the existing
+# Hermes setup or asks with `hermes model`.
 
 agent:
-  reasoning_effort: low   # quick chat replies; say "think hard" for tough ones
+  reasoning_effort: low   # quick chat replies; "convene the council" for the hard ones
+  # The council needs: clarify (buttons), cronjob (brief and recaps), memory,
+  # delegation (full council), browser and web (errands), tts/stt (voices).
+  disabled_toolsets: []
 
 approvals:
   mode: manual            # ask before every risky command
@@ -13,30 +17,7 @@ approvals:
 skills:
   write_approval: true    # show any new or changed skill before saving it
 
-# Watch-and-take-over browser (Bot Screen). The installer sets
-# browser.executable_path for the host.
-browser:
-  headed: true            # the bot's browsing shows on its screen
-bot_desktop:
-  auto_start: true        # bring the screen up on the first browser use
-  idle_stop_minutes: 20   # free the memory when nobody is using it
-  min_free_memory_mb: 1024  # tuned for a 4 GB VPS with swap
-
-# Desktop workspace in a browser: Tailscale (remote-access.sh) or an SSH tunnel.
-# remote-access.sh also sets public_url, which must be the exact https name.
-webapp:
-  enabled: true
-  host: 127.0.0.1
-  port: 9120
-
 platforms:
   telegram:
     extra:
       drop_pending_on_cold_boot: false   # don't lose texts sent during a reboot
-
-# Nothing leaves the server except what a reply needs: keep Hermes's
-# optional aggregate metrics off.
-telemetry:
-  shared_metrics:
-    enabled: false
-    send: false

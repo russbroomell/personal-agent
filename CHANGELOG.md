@@ -24,14 +24,33 @@ simulated install; check it on a real Hermes 0.23.4 box with
   whose advice you took and who you cut short.
 - New 5-minute first session: six questions, a member reacts to each, a live
   first win; everything else drips in through the morning brief.
-- `council-voices` plugin (from `twin-voices` on `claude/romulus-remus`):
+- `council-voices` plugin (generalizes `twin-voices` from #13):
   any number of speakers, a voice per member on Edge, Grok or ElevenLabs.
 - `install.sh` for a computer that already runs Hermes: reuses the existing
   model setup, can bring memory over from a Sidekick profile, works as root.
 - Auto-update follows the branch you installed from, and backs up first.
-- Removed from this branch (still on `main`): bootstrap-vps.sh, setup.sh,
+- Removed (still in git history): the six characters, the two-voice
+  character and `twin-voices` plugin from #13, bootstrap-vps.sh, setup.sh,
   install-agent.sh, guest bots, reset and move scripts, the old setup guides
   and demo script.
+
+## Romulus and Remus (merged in #13, never released; superseded by the council)
+
+Tested with Hermes Agent 0.23.4.
+
+- New character: **Romulus and Remus**, one assistant with two voices.
+  Solo replies for errands, a four-line Duet on decisions that always ends
+  with "Both:" and a pick or "Your call.", and one plain voice for serious
+  moments. Banter level and a tally of whose ideas you took live in
+  `notes/brothers.md`. Third audition round in the first session.
+- New plugin `twin-voices` (ships with the profile, on only for two-voice
+  characters): speaks each "Name:" line in that speaker's voice with Grok,
+  free Edge or ElevenLabs voices and sends one Telegram voice bubble; with
+  ElevenLabs, lines go out as one natural dialogue.
+- `voice-setup.sh elevenlabs`: ElevenLabs speech both ways (asks for the
+  key once, stored in the profile's `.env`).
+- `build-soul.sh` restores the previous voice engine when switching from a
+  two-voice character back to a one-voice one.
 
 ## 0.1.0 (2026-11-10)
 

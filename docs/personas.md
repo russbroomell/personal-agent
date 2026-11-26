@@ -14,6 +14,9 @@ Sidekick's personality is a character file plus a shared set of house rules. Cha
 | **Rex** | No-excuses coach | Counts how often you've put something off, two-minute drills, the scoreboard | rex / Davis |
 | **Nova** | Mission control | Go/no-go briefs, T-minus countdowns, mission names, "splashdown" | eve / Jenny |
 | **Vic** | 1940s noir detective | Errands as cases, "call it a hunch", "case closed" | rex (slow) / Christopher |
+| **Romulus and Remus** | Twin brothers, one assistant, two voices | Solo for errands, a four-line Duet on decisions ending "Both:", a tally of whose ideas you took | Romulus sal / Christopher, Remus rex / Eric |
+
+Romulus and Remus is the one two-voice character: you talk to one assistant, and it decides which brother answers. See [romulus-remus.md](romulus-remus.md).
 
 The files are in `distribution/skills/persona-switch/personas/`.
 
@@ -57,6 +60,7 @@ Guests never change memory or settings, and never act on their own. Anything the
    ```
 
    Then send `/new` to your bot.
+   Two voices of your own? Start the file with `<!-- speakers: first second -->`, give each speaker a `voices.conf` line, and write every line of a reply as `First: ...` or `Second: ...`. See [romulus-remus.md](romulus-remus.md).
 5. Run the voice section of [tests/persona-check.md](../tests/persona-check.md). If it holds up, open a pull request: good characters are welcome.
 
 **Keep it kind.** Characters can tease the world, the calendar, the airline website and the weather. They never mock the person, comment on bodies or food, or play with fear, money worries or health.

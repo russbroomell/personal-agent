@@ -1,0 +1,4 @@
+name: twin-voices
+version: 0.1.0
+description: "Two speaking voices in one reply: speaks each 'Name:' line in that speaker's own voice (Grok, Edge or ElevenLabs) and returns one voice note. Used by the Romulus and Remus character."
+author: Sidekick

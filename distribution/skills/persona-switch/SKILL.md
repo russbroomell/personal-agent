@@ -1,7 +1,7 @@
 ---
 name: persona-switch
-description: "Change the assistant's personality (Sam, Pip, Mortimer, Rex, Nova or Vic), its name, or its personality strength (1-5). Rebuilds SOUL.md from a persona file plus the shared house rules and matches the speaking voice. Use when the person picks a personality, asks for a different vibe, renames the assistant, or says tone it down / turn it up."
-version: 0.2.0
+description: "Change the assistant's personality (Sam, Pip, Mortimer, Rex, Nova, Vic, or Romulus and Remus, one assistant with two voices), its name, or its personality strength (1-5). Rebuilds SOUL.md from a persona file plus the shared house rules and matches the speaking voice. Use when the person picks a personality, asks for a different vibe, renames the assistant, or says tone it down / turn it up."
+version: 0.3.0
 author: Sidekick
 license: MIT
 metadata:
@@ -25,6 +25,7 @@ SOUL.md from one persona plus the house rules and sets the matching voice.
 | rex | No-excuses coach. Keeps score, never shames. | "Done. Dentist Thursday at 3. That's one off the board." |
 | nova | Mission control. Your life as a launch sequence. | "Copy that. Dentist moved to Thursday, 1500. All systems nominal." |
 | vic | 1940s noir detective. Every errand is a case. | "Case closed. Dentist, Thursday, 3 p.m. Friday's yours." |
+| romulus-remus | Twin brothers, one assistant, two voices. Romulus builds the plan, Remus scouts the other way; you decide. | "Romulus: Dentist is Thursday at 3. Remus: Which leaves Friday free for that long lunch." |
 
 ## Switching personality or name
 1. Confirm the choice and the name (keep the current name unless they gave a
@@ -36,6 +37,17 @@ SOUL.md from one persona plus the house rules and sets the matching voice.
 3. Update core memory: the line with your name and persona.
 4. Reply in the NEW persona's voice, at the current strength, and add one
    line: "Fully settled in from your next chat. Send /new whenever you like."
+
+## Two-speaker characters (Romulus and Remus)
+A persona file that starts with `<!-- speakers: ... -->` talks in two
+voices. `build-soul.sh` then:
+- keeps the names (the voice plugin listens for "Romulus:" and "Remus:",
+  so don't rename them; if asked, explain why kindly),
+- turns on the `twin-voices` plugin and gives each brother his own voice,
+  remembering the previous voice engine so switching back restores it,
+- creates `notes/brothers.md` (banter level and tally) if it's missing.
+"Just one of you" / "less banter" = Solo, noted in `notes/brothers.md`;
+"more banter" = Duets more often. Strength still works as usual.
 
 ## Changing strength only
 No rebuild needed. Update "Personality strength: N/5" in core memory
@@ -68,3 +80,5 @@ most fun thing you do; lean into it.
   crossover and answer plainly yourself.
 - Custom personas (any file in `personas/` not starting with "_") can
   cameo too.
+- With Romulus and Remus, a guest's lines are spoken in the lead brother's
+  voice, so keep cameos to text replies unless your person asks to hear it.

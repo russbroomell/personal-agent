@@ -25,6 +25,12 @@ bash ~/personal-agent/scripts/voice-setup.sh free
 
 Use this instead if Grok's voice isn't available on your plan. It uses **free voices** (Microsoft Edge voices, no account), and listening runs on the server itself with Whisper. That costs about 300 MB of memory while in use, which is fine on 4 GB.
 
+```bash
+bash ~/personal-agent/scripts/voice-setup.sh elevenlabs
+```
+
+**ElevenLabs voices** (paid; asks for your API key once and keeps it in the profile's `.env`). Best with Romulus and Remus: their lines are sent as one dialogue, so the hand-offs sound like two people in a room.
+
 Switching personality switches the voice too.
 
 | Persona | Grok voice | Free voice | Delivery |
@@ -35,6 +41,10 @@ Switching personality switches the voice too.
 | Rex | rex (a bit faster) | en-US-Davis | Crisp, energetic, excited only for wins |
 | Nova | eve | en-US-Jenny | Calm, clipped, like a radio channel |
 | Vic | rex (slow) | en-US-Christopher | Low, slow, world-weary, with a wink |
+| Romulus (lead) | sal (a bit slower) | en-US-Christopher | Lower, steady, unhurried |
+| Remus | rex (a bit faster) | en-US-Eric | Brighter, quicker, a smile in it |
+
+Romulus and Remus speak in two voices in the same reply. A small plugin that ships with Sidekick (`twin-voices`) reads the `Romulus:` / `Remus:` / `Both:` at the start of each line, speaks each line in that brother's voice with the engine you chose above, and sends one voice bubble. Setup and settings: [romulus-remus.md](romulus-remus.md).
 
 Change a voice in `distribution/skills/persona-switch/personas/voices.conf`, then run `bash ~/personal-agent/scripts/update.sh`.
 
@@ -69,6 +79,7 @@ Change a voice in `distribution/skills/persona-switch/personas/voices.conf`, the
 | Grok voice errors, or `403` | Your xAI plan may not include voice: `bash ~/personal-agent/scripts/voice-setup.sh free` |
 | Voice conversation button missing or greyed out | You're on plain `http://`. Use the `https://…ts.net` address |
 | It transcribes the wrong words | Speak a little closer; set `stt.language` to your language; with `free`, try a bigger model: `hermes -p sidekick config set stt.local.model small` (more memory) |
+| Romulus and Remus sound like one voice | `hermes -p sidekick config get tts.provider` should say `twins`. If not, run `set-persona.sh romulus-remus` again. See [romulus-remus.md](romulus-remus.md) |
 | Voice doesn't match the personality | Run `bash ~/personal-agent/scripts/set-persona.sh <persona>` again, then `/new` |
 
-Sources: [Hermes voice mode](https://hermes-agent.nousresearch.com/docs/user-guide/features/voice-mode) · [Hermes voice and TTS](https://hermes-agent.nousresearch.com/docs/user-guide/features/tts) · [Desktop workspace in a browser](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) · [xAI text to speech](https://docs.x.ai//developers/model-capabilities/audio/text-to-speech)
+Sources: [ElevenLabs Text to Dialogue](https://elevenlabs.io/docs/api-reference/text-to-dialogue/convert) · [Hermes voice mode](https://hermes-agent.nousresearch.com/docs/user-guide/features/voice-mode) · [Hermes voice and TTS](https://hermes-agent.nousresearch.com/docs/user-guide/features/tts) · [Desktop workspace in a browser](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) · [xAI text to speech](https://docs.x.ai//developers/model-capabilities/audio/text-to-speech)

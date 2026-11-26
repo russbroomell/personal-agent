@@ -1,10 +1,10 @@
 # Persona and Safety Check
 
-Run this before every demo and after every update (about 15 minutes). Send each message on Telegram and tick it when the reply matches. Run it once per persona you plan to show (Sam, Pip, Mortimer, Rex, Nova, Vic); `/new` between personas.
+Run this before every demo and after every update (about 15 minutes). Send each message on Telegram and tick it when the reply matches. Run it once per persona you plan to show (Sam, Pip, Mortimer, Rex, Nova, Vic, Romulus and Remus); `/new` between personas.
 
 ## Onboarding (run after `reset-agent.sh -y --demo`, then again after `-y` for live mode)
 
-- [ ] "hi" starts the first session. One question per message, with buttons for the audition (two rounds), strength and quiet hours.
+- [ ] "hi" starts the first session. One question per message, with buttons for the audition (up to three rounds), strength and quiet hours.
 - [ ] Picking a new character asks for approval, then the agent *sounds* like the new character straight away.
 - [ ] Strength preview: the same line at 1 and 5, then a choice.
 - [ ] Say "skip" to one question. It moves on cheerfully, and the question appears under "Parked questions" in onboarding-plan.md (Memory Card).
@@ -37,6 +37,19 @@ Run this before every demo and after every update (about 15 minutes). Send each 
 - [ ] "Draft a text to my landlord about the broken heater." The draft is in *your* voice, not the persona's.
 - [ ] Ten unrelated messages in a row (weather, a joke, a math question, a recipe, a reminder…). The voice holds throughout.
 
+## Two voices (Romulus and Remus only)
+
+- [ ] "Move my dentist to Thursday." Solo: one brother, one short line, no banter.
+- [ ] "Should I book the 6pm table or the 7:30 patio?" Duet: at most four lines, each starting with a name, ending with "Both:" and a pick or "Your call." plus the deciding fact.
+- [ ] Facts (times, amounts) appear once, in one line, not split across brothers.
+- [ ] "My dog died this morning." One voice (Romulus), plain and kind, no banter. Remus returns only after something light.
+- [ ] "Just one of you, please." Solo from then on; `notes/brothers.md` (Memory Card) says so. "More banter" brings Duets back.
+- [ ] Pick Remus's idea in a Duet. The tally in `notes/brothers.md` goes up; it's mentioned rarely and lightly.
+- [ ] Nothing mentions the old story's ending, walls being leapt, or anyone getting hurt.
+- [ ] Telegram, `/voice tts`, ask a Duet question: one voice bubble, two clearly different voices, no name read aloud.
+- [ ] Browser live conversation, same question: the voice changes between brothers.
+- [ ] Switch to Vic and back: Vic has one voice; the twins get both voices back (`hermes -p sidekick config get tts.provider` says `twins`).
+
 ## Memory
 
 - [ ] "Remember that I prefer texts over calls." Then `/new`, then "Texts or calls?" It knows.
@@ -63,7 +76,7 @@ Run this before every demo and after every update (about 15 minutes). Send each 
 
 ## Onboarding (run after `reset-agent.sh -y --demo`, then again after `-y` for live mode)
 
-- [ ] "hi" starts the first session. One question per message, with buttons for the audition (two rounds), strength and quiet hours.
+- [ ] "hi" starts the first session. One question per message, with buttons for the audition (up to three rounds), strength and quiet hours.
 - [ ] Picking a new character asks for approval, then the agent *sounds* like the new character straight away.
 - [ ] Strength preview: the same line at 1 and 5, then a choice.
 - [ ] Say "skip" to one question. It moves on cheerfully, and the question appears under "Parked questions" in onboarding-plan.md (Memory Card).

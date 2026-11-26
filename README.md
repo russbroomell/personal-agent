@@ -33,6 +33,9 @@ Pick one in the first chat, and choose how strong (1 = a hint, 5 = full characte
 | **Rex** | No-excuses coach | "DONE ✅ Three wins before lunch. Now let's finally take down that registration." |
 | **Nova** | Mission control | "Dentist rescheduled, T-minus two days, 1500 hours. Friday is clear for launch 🚀" |
 | **Vic** | 1940s noir detective | "It wasn't easy, but nothing in this town is. Friday's yours now, kid. Case closed." |
+| **Romulus and Remus** | Twin brothers, one assistant, two voices | "Romulus: Dentist, Thursday, 3 p.m. Booked. Remus: He did it in one call. I'd have negotiated a free toothbrush. Both: Friday's yours." |
+
+Romulus and Remus is one assistant that talks in two voices: Romulus builds the plan, Remus scouts the other way, and on decisions they each make their case in a line and hand you the call. On voice notes you hear both brothers in one bubble. See [docs/romulus-remus.md](docs/romulus-remus.md).
 
 Ask for a **cameo** ("ask Mortimer what he thinks of my calendar"), or a **crossover**:
 
@@ -213,11 +216,12 @@ If a friend already runs Sidekick, they can make you a test-drive bot on their s
 | Path | What it is |
 | --- | --- |
 | `distribution/` | The agent, as a Hermes [profile distribution](https://hermes-agent.nousresearch.com/docs/user-guide/profile-distributions): config, safety settings and skills (all plain Markdown) |
-| `distribution/skills/persona-switch/` | The six characters, the strength dial, cameos and crossovers, the shared house rules, and `build-soul.sh` |
+| `distribution/skills/persona-switch/` | The seven characters (including two-voice Romulus and Remus), the strength dial, cameos and crossovers, the shared house rules, and `build-soul.sh` |
+| `distribution/plugins/twin-voices/` | Speaks each brother's lines in his own voice and sends one voice note ([docs](docs/romulus-remus.md)) |
 | `distribution/skills/deep-dive/` | Ten 3–5 minute setup interviews, one per area of life |
 | `distribution/skills/*` | First session, onboarding plan, morning brief, watchers, open loops, Friday recap, savings ledger, weekly memory tidy-up, browser hand-off, inbox triage, meeting prep, Memory Card, show-off, share card, kill switch |
 | `templates/notes/` | Starter topic notes, including the onboarding plan |
-| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `guest-bot.sh` (a friend's own test-drive bot), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh`, `reset-agent.sh` (reset button and snapshots), `update.sh`, `release.sh` (maintainers), `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
+| `scripts/` | `bootstrap-vps.sh`, `setup.sh` (everything else, in one go), `check.sh` (health check), `auto-update.sh` (nightly updates with rollback), `guest-bot.sh` (a friend's own test-drive bot), `install-agent.sh`, `remote-access.sh`, `voice-setup.sh` (grok, free or elevenlabs), `reset-agent.sh` (reset button and snapshots), `update.sh`, `release.sh` (maintainers), `backup.sh`, `move-agent.sh`, `set-persona.sh`, `schedule-jobs.sh`, and the Memory Card server |
 | `docs/setup-guide-ovh.md` | Setup, step by step |
 | `docs/onboarding.md` | How onboarding works, and how a demo carries over to someone's own bot |
 | `docs/voice.md` · `docs/models.md` · `docs/personas.md` | Talking to it · choosing a model · writing a character |

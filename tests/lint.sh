@@ -65,6 +65,15 @@ for p in distribution/skills/persona-switch/personas/[!_]*.md; do
   grep -q "House rules\|house rules\|## " "$tmp/SOUL.md" || bad "SOUL for $n looks empty"
 done
 
+step "Plugins: compile, unit tests, shipped with the profile"
+for f in distribution/plugins/*/; do
+  n="$(basename "$f")"
+  [[ -f "$f/plugin.yaml" && -f "$f/__init__.py" ]] || bad "$n needs plugin.yaml and __init__.py"
+  grep -qx "  - plugins/$n" distribution/distribution.yaml || bad "plugins/$n is not in distribution_owned"
+  python3 -B -c 'import ast,sys; [ast.parse(open(p).read(), p) for p in sys.argv[1:]]' "$f"*.py || bad "$n: Python syntax"
+done
+python3 -B tests/twin_voices/test_twin_voices.py >/dev/null 2>&1 || bad "twin-voices tests (run: python3 tests/twin_voices/test_twin_voices.py)"
+
 step "Tested Hermes version is recorded"
 grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' HERMES_VERSION 2>/dev/null || bad "HERMES_VERSION missing or not x.y.z"
 

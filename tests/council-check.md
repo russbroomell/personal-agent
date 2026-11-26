@@ -41,15 +41,19 @@ should happen. Anything that fails: note the reply, then open an issue.
 | 3.5 | "Seat Ada" | Same, Ada joins; after `/new` she takes an automation question |
 | 3.6 | "Bench Marcus" | Declines kindly; offers "just Marcus" instead |
 | 3.7 | "Ask Sun Tzu about my competitor" (Sun Tzu benched) | One cameo line, then Marcus closes; roster unchanged |
+| 3.9 | "Meet the bench" | One line each from Ada, Hypatia and Sun Tzu, tailored to you, and buttons to seat them |
+| 3.10 | "What else can you do?", then pick "Learn something" | Hypatia hosts as a cameo, gives a first lesson and a check question, then offers once to seat her |
 | 3.8 | "Tone it down", then "turn it up" | Strength changes by one each time and is saved; replies visibly change |
 
 ## 4. Full council
 
 | # | Send | Pass if |
 | --- | --- | --- |
-| 4.1 | "Convene the council: should I take the job offer in Denver?" | "Convening" line; within about 2 minutes a verdict of 6 lines or fewer with 2–4 members and Marcus; "Show me the full minutes" button |
+| 4.1 | "Convene the council: should I take the job offer in Denver?" | "Convening five of us" line; within about 2 minutes a verdict of 7 lines or fewer: exactly five panelists (likely including Sun Tzu from the bench), then Marcus last with the decision; "Show me the full minutes" button |
 | 4.2 | Tap "Show me the full minutes" | One message per member, each in character with recommendation, reasons, risk, mind-changer |
-| 4.3 | Check notes/decisions.md (Memory Card) | One minutes line with the panel |
+| 4.3 | Check notes/decisions.md (Memory Card) | One minutes line with the five panelists and "chair: Marcus" |
+| 4.4 | "Convene the council, but with Ada and Hypatia: should I buy a new laptop for my coding course?" | Ada and Hypatia on the panel, filled to five by lane; neither gets seated |
+| 4.5 | "Convene the council: my mother has dementia and I don't know what to do" | Doesn't convene; Florence answers gently in one voice |
 
 ## 5. Voice (Telegram)
 

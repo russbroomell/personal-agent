@@ -18,8 +18,14 @@ simulated install; check it on a real Hermes 0.23.4 box with
 - Rules of debate in every chat: chair speaks last, no fact disputes, one
   turn each, lanes, serious moments in one voice, members advise and only
   the agent acts, respectful portrayals.
-- `convene`: the full council through parallel subagents, on request, with
-  minutes saved to decisions.md.
+- `convene`: the full council on request. Five members (seated or from the
+  bench, by lane) think in parallel through subagents; Marcus chairs, weighs
+  all five and gives a verdict of seven lines at most; minutes saved to
+  decisions.md.
+- The bench has real jobs. Ada, Hypatia and Sun Tzu have full files
+  (tension partners, example questions, when to offer them a seat), join
+  the full council when their lane fits, and each hosts a new deep dive:
+  Automate my week, Learn something, Compete & grow.
 - `council-minutes`: a Sunday job that tunes the council's notebook from
   whose advice you took and who you cut short.
 - New 5-minute first session: six questions, a member reacts to each, a live

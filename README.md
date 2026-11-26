@@ -27,7 +27,7 @@ Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Re
 | **Richard Feynman** | Explainer | Learning, fixing things, "how do we know that?" |
 | **Scheherazade** | Storyteller | Emails, posts, speeches, hard messages |
 | **Florence Nightingale** | Caretaker | Health, rest, caring for others; serious moments |
-| *Bench:* Ada Lovelace, Hypatia, Sun Tzu | | Automation · teaching · competition. Seat any of them with "seat Ada" |
+| *Bench:* Ada Lovelace, Hypatia, Sun Tzu | Engineer, Teacher, General | Automation and tech · learning plans and homework · competitors and positioning. They join the full council when their lane fits, host their own setup areas, and can be seated with "seat Ada" |
 
 They're built to pull against each other (Newton against Māui, Romulus against Remus, Odysseus against Marcus), with rules that keep that useful: the chair always lands it, members argue about approach and never about facts, each gets one turn, serious moments get one gentle voice, and only the agent acts, with your yes. Details: **[docs/council.md](docs/council.md)**.
 
@@ -39,7 +39,7 @@ They're built to pull against each other (Newton against Māui, Romulus against 
 - **A 5-minute start.** Marcus asks six questions, and a different member reacts to each answer, so you meet the council while it does a real errand for you. Everything else drips in, one optional item a day in the morning brief.
 - **A daily rhythm.** A morning brief with one suggested step, nudges on open loops, watchers that ping only on change, a Friday recap, and Sunday tidy-ups.
 - **It tunes itself.** A weekly review notices whose advice you take and who you cut short, adjusts the council's notebook, and tells you in one line how to undo it.
-- **The full council, on request.** "Convene the council" has 2–4 members think separately, in parallel, then Marcus gives a verdict and files the minutes.
+- **The full council, on request.** "Convene the council" has five members (seated or from the bench) think separately, in parallel, then Marcus chairs: he weighs all five, gives a verdict, and files the minutes.
 - **You run the room.** "Just Marcus", "fewer voices", "bench Māui", "turn it up", or "add Cleopatra to the council".
 - **Careful with your stuff.** It asks before anything that spends, sends, books or cancels. It treats emails and web pages as information, never orders, and never uses bank logins. "Stop everything" pauses it all.
 

@@ -31,7 +31,7 @@ Each member is one Markdown file in `distribution/skills/council/members/`. The 
 | **Duet** | A choice with a trade-off | Two members from a tension pair, then Marcus (3 lines) |
 | **Council** | A bigger decision | Up to three members, then Marcus (5 lines at most) |
 | **One voice** | Serious, sad, urgent, protected time | Florence or Marcus alone, plainly |
-| **Full council** | "Convene the council", or the button on a big decision | 2–4 members think separately (parallel subagents), then Marcus gives a verdict and saves the minutes |
+| **Full council** | "Convene the council", or the button on a big decision | Five members, seated or bench, think separately (parallel subagents); Marcus chairs, weighs all five and gives a verdict (7 lines at most), and the minutes are saved |
 
 ```
 Newton: The repair is $1,900 once. A new van is $412 a month.
@@ -40,7 +40,22 @@ Marcus: Fix it and wrap it. You get a year to save, and free advertising.
 [Fix + wrap]  [Get quotes on both]  [Just fix it]
 ```
 
-Everything except the full council is **one model call**: one model writes every voice, so replies come back in seconds, the long system prompt is cached, and the facts stay consistent. The full council costs 3–5 calls and about a minute, so it only happens when you ask for it, or tap the button the council offers once on expensive, hard-to-undo decisions.
+Everything except the full council is **one model call**: one model writes every voice, so replies come back in seconds, the long system prompt is cached, and the facts stay consistent. The full council costs about six model calls and a minute or two, so it only happens when you ask for it, or tap the button the council offers once on expensive, hard-to-undo decisions.
+
+## The bench
+
+Ada Lovelace, Hypatia and Sun Tzu don't speak in everyday replies, but they have real jobs:
+
+| Member | Lane | Tension partner | Hosts | Gets offered a seat when |
+| --- | --- | --- | --- | --- |
+| **Ada Lovelace** | Automation, tech setup, gadgets | Romulus (automate it, or just do it now) | Automate my week: up to two small engines, and a list of them | You ask for the same task on a schedule three times, or have tech trouble twice in a week |
+| **Hypatia** | Learning plans, exams, kids' homework | Māui (learn it properly, or dive in) | Learn something: a three-stage plan with a daily dose | A course, exam, language or kids' schoolwork comes up twice |
+| **Sun Tzu** | Competitors, pricing, positioning, job hunts | Odysseus (change the ground, or work the deal) | Compete & grow: a three-word strategy and a competitor watcher | You mention competitors or pricing twice, are job hunting, or have a recurring dispute |
+
+- **Full council:** they're picked for the five-member panel whenever their lane is central (Sun Tzu on a job offer, Hypatia on going back to school), without being seated.
+- **Cameos:** "ask Sun Tzu about my competitor".
+- **"Meet the bench":** one line from each about what they'd do for you, with buttons to seat them.
+- Seating one adds their card to every chat (all twelve seated is about 20 KB, still well under budget).
 
 ## The tension, and the guardrails
 
@@ -108,4 +123,4 @@ Or just tell the bot "add Cleopatra to the council": it asks two questions, writ
 - `skills/council/build-soul.sh` builds `SOUL.md` from `chair.md` (modes, lanes, rules of debate, strength), the seated members' cards, a bench line, and `house-rules.md`. Seats and the assistant's name live in `council.conf`, outside the files an update replaces.
 - It also writes `tts.council.*` (voices per member) and turns on the `council-voices` plugin. See [voice.md](voice.md).
 - Core memory holds `Council size: N` and `Character strength: N/5`.
-- Skills: `council` (roster, cameos, debates, new members), `convene` (full council through `delegate_task`), `council-minutes` (weekly tuning), `first-session` (onboarding), plus the daily skills from earlier versions: morning brief, open loops, watchers, Friday recap, deep dives, inbox triage, Memory Card, kill switch, and others.
+- Skills: `council` (roster, the bench, cameos, debates, new members), `convene` (five-member full council through `delegate_task`, Marcus chairing), `council-minutes` (weekly tuning), `first-session` (onboarding), plus the daily skills from earlier versions: morning brief, open loops, watchers, Friday recap, deep dives, inbox triage, Memory Card, kill switch, and others.

@@ -49,8 +49,12 @@ the map in a few short lines, in your voice:
   Parked: Money & bills
   Ready when you are: Family & people, Travel, Food & errands, Goals & habits,
   Small business, Faith & community, Health
+  With the bench: Automate my week (Ada), Learn something (Hypatia),
+  Compete & grow (Sun Tzu)
 
-Then offer three areas with buttons (see the `deep-dive` skill).
+Then offer three areas with buttons (see the `deep-dive` skill). Offer a
+bench area when it fits what they've said (repeat chores: Ada; a course,
+exam or kids' homework: Hypatia; competitors or job hunting: Sun Tzu).
 
 ## Coming back ("let's continue", or a test drive's first message)
 1. Read the plan and core memory.

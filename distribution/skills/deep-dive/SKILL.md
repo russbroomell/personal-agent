@@ -1,6 +1,6 @@
 ---
 name: deep-dive
-description: "Short setup interviews (3-5 minutes each) for one area of life - home & car, money & bills, health, family & people, work & inbox, travel, food & errands, goals & habits, small business, faith & community. Each ends with something real set up and one thing done on the spot. Use when the person picks an area, asks what else you can do, says let's continue, or accepts a deep-dive offer."
+description: "Short setup interviews (3-5 minutes each) for one area of life - home & car, money & bills, health, family & people, work & inbox, travel, food & errands, goals & habits, small business, faith & community, plus automate my week, learn something, and compete & grow (hosted by the bench). Each ends with something real set up and one thing done on the spot. Use when the person picks an area, asks what else you can do, says let's continue, or accepts a deep-dive offer."
 version: 0.1.0
 author: The Council
 license: MIT
@@ -30,6 +30,9 @@ something running that will save them time or money from tomorrow.
 | Goals & habits | goals-habits.md | 3 | Check-ins and a weekly score |
 | Small business | small-business.md | 5 | Lead follow-ups, invoice-chasing drafts |
 | Faith, community & volunteering | community.md | 3 | Duties in the brief, seasonal look-aheads |
+| Automate my week | automate-week.md | 4 | Up to two small engines (watchers, scheduled reports), and a list of them |
+| Learn something | learn-something.md | 3 | A three-stage learning plan with a daily dose and weekly check question |
+| Compete & grow | compete-grow.md | 4 | A three-word strategy, a competitor watcher, dated next steps |
 
 ## Choosing one
 
@@ -82,4 +85,13 @@ they mentioned), then add "Show me all". Never offer areas marked
 | Goals & habits | Florence |
 | Small business | Odysseus, with Māui for marketing |
 | Faith, community & volunteering | Marcus |
+| Automate my week | Ada |
+| Learn something | Hypatia |
+| Compete & grow | Sun Tzu, with Newton for numbers |
+
+A host on the bench runs their dive as a cameo: they lead it (read their
+full file first), Marcus closes, and at the end you offer once to seat them
+("Want Ada on the council for good?" Yes / Not now). Yes loads the `council`
+skill to seat them.
+
 - Never ask for passwords, account, card or ID numbers in any module.

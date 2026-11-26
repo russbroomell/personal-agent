@@ -94,6 +94,31 @@ PATH=/usr/bin:/bin bash "$B" --no-voice --defaults >/dev/null
 grep -q '^SEATED=' "$tmp/council.conf" || bad "council.conf not written"
 [[ -f "$tmp/notes/council.md" ]] || bad "notes/council.md not seeded"
 
+for p in "$C"/members/[!_]*.md; do
+  grep -q '^Seat: .*(bench)' "$p" || continue
+  n="$(basename "$p" .md)"
+  for h in "### Works with" "### Ask " "### When to seat"; do
+    grep -q "^$h" "$p" || bad "$n is on the bench but has no '$h' section"
+  done
+done
+PATH=/usr/bin:/bin bash "$B" --no-voice --roster "$(cd "$C/members" && ls [!_]*.md | sed 's/\.md$//' | tr '\n' ' ')" >/dev/null || bad "build-soul with everyone seated"
+size="$(wc -c <"$tmp/SOUL.md")"
+[[ "$size" -le 30000 ]] || bad "SOUL.md with all members seated is $size bytes (limit 30000)"
+PATH=/usr/bin:/bin bash "$B" --no-voice --defaults >/dev/null
+
+step "Deep dives: every module is listed with a host"
+for m in distribution/skills/deep-dive/modules/*.md; do
+  f="$(basename "$m")"
+  area="$(grep -F "| $f |" distribution/skills/deep-dive/SKILL.md | cut -d'|' -f2 | sed 's/^ *//; s/ *$//')"
+  [[ -n "$area" ]] || { bad "deep-dive module $f isn't in the modules table"; continue; }
+  grep -qE "^\| $area \| [A-Z]" distribution/skills/deep-dive/SKILL.md <<<"$(grep -v "| $f |" distribution/skills/deep-dive/SKILL.md)" || bad "deep-dive area '$area' has no host"
+  grep -qF "| $area |" templates/notes/onboarding-plan.md || bad "deep-dive area '$area' isn't on the Life Map template"
+done
+
+step "Full council: five panelists, Marcus chairs"
+grep -q 'Exactly five panelists' distribution/skills/convene/SKILL.md || bad "convene must say: Exactly five panelists"
+grep -q 'Marcus is never one of them' distribution/skills/convene/SKILL.md || bad "convene must keep Marcus as chair, not a panelist"
+
 step "Skills reference only skills that exist"
 for s in $(grep -rhoE '`[a-z][a-z-]+` skill|load(s)? (the )?`[a-z][a-z-]+`' distribution/skills | grep -oE '`[a-z-]+`' | tr -d '`' | sort -u); do
   [[ -f "distribution/skills/$s/SKILL.md" ]] || bad "a skill mentions '$s', which doesn't exist"

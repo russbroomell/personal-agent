@@ -64,7 +64,7 @@ The default is a single model call. The SOUL contains a short card for each memb
 | **Duet** | A choice with a trade-off | Two members from a tension pair, then Marcus lands it (3 lines) |
 | **Council** | Bigger decisions: plans, purchases, "should I", business questions | Up to three members, then Marcus (at most 5 lines) |
 | **One voice** | Serious, urgent, sad, or protected time | Nightingale or Marcus alone, plainly |
-| **Full council** (extra calls, on request) | "Convene the council", or a button offered on high-stakes decisions | 2–4 members in parallel through Hermes `delegate_task`, each in character with the full persona file; Marcus combines their views into a short verdict and saves the minutes to `notes/decisions.md` |
+| **Full council** (extra calls, on request) | "Convene the council", or a button offered on high-stakes decisions | Five members (seated or bench) in parallel through Hermes `delegate_task`, each in character with the full persona file; Marcus combines their views into a short verdict and saves the minutes to `notes/decisions.md` |
 
 Every line starts with `Name:`. The council-voices plugin (described below) speaks each tag in that member's voice. In text, the tags read like a small group chat.
 

@@ -1,0 +1,4 @@
+name: council-privacy
+version: 1.0.0
+description: "Many Discord users, one council: each person gets a private DM with their own folder and first-time setup, and nothing from a DM appears in a public channel unless that person asks. Off on other platforms."
+author: The Council

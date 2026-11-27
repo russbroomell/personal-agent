@@ -14,6 +14,11 @@ metadata:
 
 File: open-loops.md in the notes folder, newest at the top:
 
+**A person's private folder.** If the job's prompt names a private folder
+(`notes/people/<platform>-<id>/`), this job is for that one person: use
+only that folder for every note named below, read `profile.md` there
+instead of core memory, and mention nothing about anyone else.
+
 - [ ] 2026-11-03 | Call the furnace guy about the noise | theirs | nudge 11-05
 - [ ] 2026-11-03 | Find a Saturday plumber | mine | due today
 - [x] 2026-11-01 | Renew car registration | closed 11-02

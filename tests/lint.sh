@@ -132,6 +132,7 @@ for f in distribution/plugins/*/; do
   python3 -B -c 'import ast,sys; [ast.parse(open(p).read(), p) for p in sys.argv[1:]]' "$f"*.py || bad "$n: Python syntax"
 done
 python3 -B tests/council_voices/test_council_voices.py >/dev/null 2>&1 || bad "council-voices tests (run: python3 tests/council_voices/test_council_voices.py)"
+python3 -B tests/council_privacy/test_council_privacy.py >/dev/null 2>&1 || bad "council-privacy tests (run: python3 tests/council_privacy/test_council_privacy.py)"
 
 step "Tested Hermes version is recorded"
 grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' HERMES_VERSION 2>/dev/null || bad "HERMES_VERSION missing or not x.y.z"

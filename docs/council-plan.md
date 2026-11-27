@@ -146,6 +146,8 @@ Most of this already exists on `main` and carries over unchanged.
 | The six characters from `main` | Replaced on this branch; `main` keeps them |
 | Name | The Council; Hermes profile `council` |
 | Voice scope | Telegram voice notes and live browser voice now; a phone number later |
+| Chat app (Nov 27) | Discord first, with a private DM per person and mention-free public channels (`council-privacy`); Telegram as the one-person alternative |
+| Questions about the bot (Nov 27) | Marcus answers alone |
 
 ## 6. What was built
 

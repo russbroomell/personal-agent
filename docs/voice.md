@@ -8,7 +8,7 @@ Commands here assume the Council is in Hermes's default profile (what `install.s
 
 | Way | Where | Feels like | Needs |
 | --- | --- | --- | --- |
-| **Voice notes** | Telegram, on your phone | Walkie-talkie: hold to talk, one voice bubble with every member who answers | `voice-setup.sh` |
+| **Voice notes** | Telegram on your phone, or Discord voice messages (the reply may arrive as an audio file; see [discord.md](discord.md#voice-on-discord)) | Walkie-talkie: hold to talk, one voice bubble with every member who answers | `voice-setup.sh` |
 | **Live conversation** | The workspace in a browser (laptop or phone) | A phone call with the council: talk naturally, interrupt any time | The workspace, on an `https://` address (Tailscale) or `http://127.0.0.1` through an SSH tunnel |
 
 ## Turn it on (2 minutes)

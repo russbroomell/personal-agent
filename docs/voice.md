@@ -4,6 +4,8 @@ Nov 26, 2026 · @Russ Broomell
 
 The council is meant to be heard. Send a voice note with a decision and you get one voice bubble back, with Newton, Māui and Marcus each in their own voice. The `council-voices` plugin does this: it splits a reply at each `Name:` tag and speaks every line with that member's voice.
 
+Commands here assume the Council is in Hermes's default profile (what `install.sh` does unless you pass `--profile`). If you installed it into a named profile, add `-p NAME` after `hermes`, and use `~/.hermes/profiles/NAME/` instead of `~/.hermes/`.
+
 | Way | Where | Feels like | Needs |
 | --- | --- | --- | --- |
 | **Voice notes** | Telegram, on your phone | Walkie-talkie: hold to talk, one voice bubble with every member who answers | `voice-setup.sh` |
@@ -46,8 +48,8 @@ bash ~/personal-agent/scripts/update.sh
 For now, on this server only:
 
 ```bash
-hermes -p council config set tts.council.voices.newton.edge en-GB-RyanNeural
-hermes -p council config set tts.council.engine elevenlabs   # which engine speaks
+hermes config set tts.council.voices.newton.edge en-GB-RyanNeural
+hermes config set tts.council.engine elevenlabs   # which engine speaks
 ```
 
 | Setting under `tts.council` | Default | What it does |
@@ -68,7 +70,7 @@ hermes -p council config set tts.council.engine elevenlabs   # which engine spea
 3. Talk normally. It answers out loud, each member in their voice, and **you can interrupt it mid-sentence**. Say **"stop"** to end.
 4. Approvals still need a tap or a clear "yes".
 
-**Tips:** use headphones, because speaker echo can trigger interruptions. If it keeps cutting itself off, run `hermes -p council config set voice.barge_in_threshold_multiplier 4`. If it's hard to interrupt, use `2`.
+**Tips:** use headphones, because speaker echo can trigger interruptions. If it keeps cutting itself off, run `hermes config set voice.barge_in_threshold_multiplier 4`. If it's hard to interrupt, use `2`.
 
 **Not with GPT-Live** (the desktop app's full-duplex mode): it uses one OpenAI voice and skips plugins, so the whole council sounds the same.
 
@@ -76,12 +78,12 @@ hermes -p council config set tts.council.engine elevenlabs   # which engine spea
 
 | What you hear or see | Try |
 | --- | --- |
-| One voice for everyone | `hermes -p council config get tts.provider` should say `council`, and `hermes -p council plugins list` should show `council-voices` enabled. Fix: `bash ~/.hermes/profiles/council/skills/council/build-soul.sh`, then `hermes -p default gateway restart` |
+| One voice for everyone | `hermes config get tts.provider` should say `council`, and `hermes plugins list` should show `council-voices` enabled. Fix: `bash ~/.hermes/skills/council/build-soul.sh`, then `hermes -p default gateway restart` |
 | "Voice engine ... isn't ready" in the logs | The engine under `tts.council.engine` isn't set up. Run `voice-setup.sh` with `free`, `grok` or `elevenlabs` |
 | It reads a name aloud ("Newton colon") | A tag landed mid-sentence. Say "start every line with the name"; if it keeps happening, send `/new` |
 | An audio file instead of a voice bubble | Install ffmpeg (`sudo apt-get install -y ffmpeg`), then `hermes -p default gateway restart` |
 | Grok voice errors, or `403` | Your xAI plan may not include voice: `voice-setup.sh free` |
-| It transcribes the wrong words | Set `stt.language`; with `free`, try a bigger model: `hermes -p council config set stt.local.model small` (more memory) |
+| It transcribes the wrong words | Set `stt.language`; with `free`, try a bigger model: `hermes config set stt.local.model small` (more memory) |
 
 ## For developers
 

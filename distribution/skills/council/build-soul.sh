@@ -14,7 +14,7 @@
 #
 # Options combine: build-soul.sh --bench maui --seat ada
 # Choices live in <profile>/council.conf, outside the files an update
-# replaces, so `hermes profile update` + this script keeps them.
+# replaces, so an update followed by this script keeps them.
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -96,7 +96,14 @@ tmp="$(mktemp)"
 size="$(wc -c <"$tmp")"
 [[ "$size" -le "$MAX_SOUL_BYTES" ]] || echo "Warning: SOUL.md is $size bytes (budget $MAX_SOUL_BYTES). Bench a member or trim a card." >&2
 
-[[ -f "$HOME_DIR/SOUL.md" ]] && cp "$HOME_DIR/SOUL.md" "$HOME_DIR/SOUL.md.bak"
+if [[ -f "$HOME_DIR/SOUL.md" ]]; then
+  # The personality that was here before the council, kept once and never overwritten.
+  if ! grep -q '^You are the Council' "$HOME_DIR/SOUL.md" && [[ ! -e "$HOME_DIR/SOUL.md.before-council" ]]; then
+    cp "$HOME_DIR/SOUL.md" "$HOME_DIR/SOUL.md.before-council"
+    echo "Kept the previous personality as SOUL.md.before-council."
+  fi
+  cp "$HOME_DIR/SOUL.md" "$HOME_DIR/SOUL.md.bak"
+fi
 mv "$tmp" "$HOME_DIR/SOUL.md"
 chmod 644 "$HOME_DIR/SOUL.md"
 printf 'SEATED=%q\nNAME=%q\n' "$SEATED" "$NAME" > "$CONF"
@@ -110,8 +117,15 @@ echo "SOUL.md built: $(wc -w <<<"$SEATED") seated ($SEATED), $size bytes."
 [[ $VOICE -eq 1 ]] || exit 0
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 command -v hermes >/dev/null 2>&1 || exit 0
-[[ "$(basename "$(dirname "$HOME_DIR")")" == "profiles" ]] || { echo "Not inside a Hermes profile; voices not set." >&2; exit 0; }
-prof="$(basename "$HOME_DIR")"
+# Which profile this is: a named one (~/.hermes/profiles/<name>) or Hermes's
+# own default profile (~/.hermes itself).
+if [[ "$(basename "$(dirname "$HOME_DIR")")" == "profiles" ]]; then
+  prof="$(basename "$HOME_DIR")"
+elif [[ "$HOME_DIR" -ef "${HERMES_HOME:-$HOME/.hermes}" ]]; then
+  prof=default
+else
+  echo "Not inside a Hermes profile; voices not set." >&2; exit 0
+fi
 cfg() { hermes -p "$prof" config "$@"; }
 
 json="$(python3 - "$MEMBERS/voices.conf" "$SEATED" "$MEMBERS" <<'PY'

@@ -27,10 +27,12 @@
 # write the repo yourself, point it at your own fork (git remote set-url).
 set -uo pipefail
 
-PROFILE="${PROFILE:-council}"
+# shellcheck source=lib/profile.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/profile.sh"
+PROFILE="${PROFILE:-$(saved_profile)}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
-STATE="$HOME/.local/state/council"
+HH="$(profile_home "$PROFILE")"
+STATE="$COUNCIL_STATE"
 LOG="$STATE/update.log"
 LAST="$STATE/last-update"
 CONF="$STATE/auto-update.conf"
@@ -124,7 +126,7 @@ restart_agent() {
 }
 
 apply_profile() {
-  hermes profile update "$PROFILE" -y && bash "$HH/skills/council/build-soul.sh" >/dev/null || return 1
+  sync_distribution "$PROFILE" "$REPO_DIR" && bash "$HH/skills/council/build-soul.sh" >/dev/null || return 1
 }
 
 snapshot() {   # nightly backup before anything changes (keeps 14)

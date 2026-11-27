@@ -168,6 +168,6 @@ Most of this already exists on `main` and carries over unchanged.
 **Not yet verified:** the Hermes docs site wasn't reachable while this was built, so these rest on the commands `main`'s scripts already use and on the earlier `twin-voices` work (tested with Hermes 0.23.4):
 - `hermes config set` with a JSON object (`build-soul.sh` falls back to one key at a time);
 - `delegate_task` being in the default toolsets (`config.yaml` sets `agent.disabled_toolsets: []`);
-- copying the `model:` block and `.env` from the default profile being enough for the new profile to use the existing model (if not, `install.sh` runs `hermes -p council model`).
+- with `--profile NAME` or `--replace`: copying the `model:` block, `.env` and `auth.json` from another profile being enough to use the existing model (if not, `install.sh` runs `hermes -p NAME model`). The default install uses the default profile's model as is.
 
 Run `tests/council-check.md` on a real box before release.

@@ -34,6 +34,14 @@ simulated install; check it on a real Hermes 0.23.4 box with
   any number of speakers, a voice per member on Edge, Grok or ElevenLabs.
 - `install.sh` for a computer that already runs Hermes: reuses the existing
   model setup, can bring memory over from a Sidekick profile, works as root.
+- `install.sh` puts the council in Hermes's **default profile** by default,
+  using the model and Telegram bot already set up there. It backs the
+  profile up first, keeps any earlier personality as
+  `SOUL.md.before-council`, adds the skills and plugin (tracked in
+  `council-files.txt`, so updates can remove dropped ones), and applies
+  settings one at a time instead of replacing `config.yaml`. `--profile
+  NAME` still gives a separate profile; every script remembers which one
+  was used (`scripts/lib/profile.sh`).
 - `install.sh --replace sidekick` upgrades a Sidekick server in place: backs
   it up, stops its auto-update and Memory Card, copies its model, memory and
   notes, moves its Telegram bot (same chat), and offers to rerun the first

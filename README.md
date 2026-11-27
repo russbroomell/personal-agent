@@ -74,7 +74,36 @@ It asks yes/no before each optional step (Enter takes the recommended answer; `-
 
 Then open the council's bot in Telegram, tap **Start**, send `/sethome`, and say **hi**.
 
-Options: `--profile NAME`, `--migrate-from PROFILE`, `--voice free|grok|elevenlabs|skip`, `--no-update`, `--no-check`. Run it again any time: it refreshes the profile and never touches memory, notes, chats or keys.
+Options: `--profile NAME`, `--replace PROFILE` (see below), `--migrate-from PROFILE` (copy memory without replacing), `--voice free|grok|elevenlabs|skip`, `--no-update`, `--no-check`. Run it again any time: it refreshes the profile and never touches memory, notes, chats or keys.
+
+### Upgrading from Sidekick
+
+If you already run Sidekick from `~/personal-agent`, switch that copy to `main` and let the installer replace it. First make sure there are no local edits (this should print nothing):
+
+```bash
+git -C ~/personal-agent status --short
+```
+
+```bash
+git -C ~/personal-agent fetch origin main && git -C ~/personal-agent checkout -B main origin/main
+```
+
+```bash
+bash ~/personal-agent/install.sh --replace sidekick
+```
+
+`--replace sidekick`:
+- backs up the Sidekick profile to `~/sidekick-backups`;
+- stops Sidekick's nightly auto-update (which would switch the copy back to `stable`) and its Memory Card page;
+- copies its model setup, memory and notes;
+- moves its Telegram bot to the Council, so you keep the same chat;
+- offers to rerun the Council's 5-minute first chat, which also sets up the Council's brief and weekly jobs.
+
+The Sidekick profile stays on disk, with its bot lines commented out so you can undo. When the Council is working, send `/new` and `/sethome` in Telegram, then remove Sidekick for good:
+
+```bash
+hermes profile delete sidekick
+```
 
 Starting from a bare server? Install Hermes first ([Hermes docs](https://hermes-agent.nousresearch.com/docs)), add swap on a 4 GB machine with `sudo bash ~/personal-agent/scripts/add-swap.sh`, then run `install.sh`.
 

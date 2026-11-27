@@ -1,8 +1,8 @@
 ---
 name: deep-dive
-description: "Short setup interviews (3-5 minutes each) for one area of life - home & car, money & bills, health, family & people, work & inbox, travel, food & errands, goals & habits, small business, faith & community. Each ends with something real set up and one thing done on the spot. Use when the person picks an area, asks what else you can do, says let's continue, or accepts a deep-dive offer."
+description: "Short setup interviews (3-5 minutes each) for one area of life - home & car, money & bills, health, family & people, work & inbox, travel, food & errands, goals & habits, small business, faith & community, plus automate my week, learn something, and compete & grow (hosted by the bench). Each ends with something real set up and one thing done on the spot. Use when the person picks an area, asks what else you can do, says let's continue, or accepts a deep-dive offer."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -30,6 +30,9 @@ something running that will save them time or money from tomorrow.
 | Goals & habits | goals-habits.md | 3 | Check-ins and a weekly score |
 | Small business | small-business.md | 5 | Lead follow-ups, invoice-chasing drafts |
 | Faith, community & volunteering | community.md | 3 | Duties in the brief, seasonal look-aheads |
+| Automate my week | automate-week.md | 4 | Up to two small engines (watchers, scheduled reports), and a list of them |
+| Learn something | learn-something.md | 3 | A three-stage learning plan with a daily dose and weekly check question |
+| Compete & grow | compete-grow.md | 4 | A three-word strategy, a competitor watcher, dated next steps |
 
 ## Choosing one
 
@@ -41,7 +44,8 @@ they mentioned), then add "Show me all". Never offer areas marked
 
 ## Running a module
 
-1. Read the module file. Say its pitch in your own persona's voice and how
+1. Read the module file. The area's host member (table below) says its
+   pitch, and how
    long it takes. Ask "Go?" (buttons: Let's go / Later / Not for me).
    "Later" parks the area; "Not for me" marks it so in the plan.
 2. Ask the questions one at a time, with buttons where the module shows
@@ -64,6 +68,30 @@ they mentioned), then add "Show me all". Never offer areas marked
 ## Style
 - Keep to the module's time. In demo mode, go faster: ask the 2-3 most
   useful questions, set up one thing, do the proof moment.
-- Your persona and strength apply, except where a module says otherwise
-  (health drops to strength 1).
+- The host leads the whole dive; other members chip in only when they add
+  something (Newton for any money maths, Scheherazade for any draft).
+  Character strength applies, except where a module says otherwise
+  (health drops to strength 1, and Florence speaks alone).
+
+| Area | Host |
+| --- | --- |
+| Home & car | Romulus |
+| Money & bills | Newton |
+| Health & appointments | Florence |
+| Family & people | Remus |
+| Work & inbox | Scheherazade |
+| Travel | Odysseus |
+| Food & errands | Romulus |
+| Goals & habits | Florence |
+| Small business | Odysseus, with Māui for marketing |
+| Faith, community & volunteering | Marcus |
+| Automate my week | Ada |
+| Learn something | Hypatia |
+| Compete & grow | Sun Tzu, with Newton for numbers |
+
+A host on the bench runs their dive as a cameo: they lead it (read their
+full file first), Marcus closes, and at the end you offer once to seat them
+("Want Ada on the council for good?" Yes / Not now). Yes loads the `council`
+skill to seat them.
+
 - Never ask for passwords, account, card or ID numbers in any module.

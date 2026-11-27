@@ -2,7 +2,7 @@
 name: meeting-prep
 description: "Prepare a short brief before a meeting - who they are, the last thing discussed, what was promised, and one thing to raise. Use when asked \"prep me for...\" or when the morning brief spots an important meeting."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:

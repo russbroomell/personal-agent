@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sidekick: turn on two-way speech.
+# The Council: turn on two-way speech, a voice per council member.
 #
 #   bash ~/personal-agent/scripts/voice-setup.sh grok   # expressive Grok voices (uses your xAI sign-in)
 #   bash ~/personal-agent/scripts/voice-setup.sh free   # free voices, no account needed
@@ -7,30 +7,31 @@
 #
 # grok: speech-to-text and text-to-speech both through xAI (the same
 #       SuperGrok/Premium+ sign-in or xAI API key as the chat model). Each
-#       persona gets its own Grok voice, with expressive delivery tags
+#       member gets a Grok voice (five voices, shared at different
+#       speeds), with expressive delivery tags
 #       ([laughs], [pause], ...) added automatically.
 # free: speech-to-text runs locally on the server (Whisper "base", ~150 MB
 #       download, ~300 MB RAM while in use); text-to-speech uses free Edge
-#       voices, one per persona.
+#       voices, a different one for every member.
 # elevenlabs: speech both ways through ElevenLabs (needs an API key; asks
-#       for it and keeps it in the profile's .env). With Romulus and Remus,
-#       the brothers' lines are spoken as one natural dialogue.
+#       for it and keeps it in the profile's .env). Council replies are spoken
+#       as one natural dialogue, a distinct voice per member.
 #
 # Then talk to it: voice notes in Telegram, or the live voice conversation
 # button in the workspace (needs the Tailscale HTTPS address). See docs/voice.md.
 set -euo pipefail
-PROFILE="${PROFILE:-sidekick}"
+PROFILE="${PROFILE:-council}"
 MODE="${1:-}"
-HH="$HOME/.hermes/profiles/$PROFILE"
+HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 cfg() { hermes -p "$PROFILE" config set "$1" "$2" >/dev/null; }
 
-[[ -d "$HH" ]] || { echo "Profile $PROFILE not installed. Run scripts/install-agent.sh first." >&2; exit 1; }
+[[ -d "$HH" ]] || { echo "Profile $PROFILE not installed. Run install.sh first." >&2; exit 1; }
 case "$MODE" in grok|free|elevenlabs) ;; *) sed -n '2,21p' "$0"; exit 1 ;; esac
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   echo "Installing ffmpeg (turns replies into Telegram voice bubbles)..."
-  sudo apt-get install -y ffmpeg >/dev/null
+  if [[ $EUID -eq 0 ]]; then apt-get install -y ffmpeg >/dev/null; else sudo apt-get install -y ffmpeg >/dev/null; fi
 fi
 
 if [[ "$MODE" == "elevenlabs" ]]; then
@@ -66,15 +67,15 @@ else
 fi
 cfg stt.language en
 
-# Match the voice to the current persona (build-soul.sh sets it).
-bash "$HH/skills/persona-switch/build-soul.sh" >/dev/null
-PERSONA=pip; NAME=""
-# shellcheck disable=SC1091
-source "$HH/persona.conf"
-hermes -p "$PROFILE" gateway restart >/dev/null 2>&1 || true
+# Hand speech to the council-voices plugin with this engine, and give every
+# seated member their voice (build-soul.sh reads the engine just set).
+case "$MODE" in grok) engine=xai ;; free) engine=edge ;; *) engine=elevenlabs ;; esac
+hermes -p "$PROFILE" config set tts.council.engine "$engine" >/dev/null
+bash "$HH/skills/council/build-soul.sh"
+timeout 120 hermes -p default gateway restart >/dev/null 2>&1 || true
 
 echo
-echo "Two-way speech is on ($MODE voices). ${NAME:-Your assistant} now speaks as $PERSONA."
+echo "Two-way speech is on ($MODE voices). Each council member speaks in their own voice."
 echo
 echo "Try it:"
 echo "  Telegram:  send a voice note; it answers with a voice note."

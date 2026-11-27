@@ -2,7 +2,7 @@
 name: inbox-triage
 description: "Sort email into \"needs you\", \"can wait\" and \"noise\", and draft replies for approval. Works on forwarded emails, or on a mailbox if one has been connected. Use when asked to triage, or in a scheduled triage job if the person set one up."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -19,7 +19,7 @@ Sources, in order of preference:
 If neither exists, say so in one line and offer: "Forward me anything you
 want a second pair of eyes on."
 
-Triage output, in your persona's voice, short:
+Triage output, in the council's voice (usually one member, the one whose lane fits), short:
 - "3 need you, 5 can wait, 12 are noise." Then the three that need them, one
   line each: who, what they want, by when, and your suggested action.
 - Offer drafts with buttons: "Draft replies to these 3?"

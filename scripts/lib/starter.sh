@@ -1,6 +1,7 @@
 # shellcheck shell=bash
-# Shared by install-agent.sh and reset-agent.sh. Source it; don't run it.
-# Needs: HH (profile home), REPO_DIR, PROFILE, MC_PORT, WEBAPP_PORT, STRENGTH.
+# Used by install.sh. Source it; don't run it.
+# Needs: HH (profile home), REPO_DIR, PROFILE, MC_PORT, WEBAPP_PORT.
+# Optional: STRENGTH (1-5, default 3), COUNCIL_SIZE (1-4, default 3).
 
 # Copy the note templates into the notes folder (never overwrites).
 # MODE (live | demo | test-drive) goes into onboarding-plan.md.
@@ -46,14 +47,19 @@ seed_user_memory() {
     cat > "$user_md" <<MEM
 Notes folder: $notes
 §
-Personality strength: $STRENGTH/5
+Council size: ${COUNCIL_SIZE:-3}
+§
+Character strength: ${STRENGTH:-3}/5
 §
 Memory Card: $mc_addr
 §
-Screen: Sidekick workspace at $ws_addr; open the bot's Screen, tap Take over, then Hand back.
+Screen: Hermes workspace at $ws_addr; open the bot's Screen, tap Take over, then Hand back.
 MEM
   else
     grep -q '^Notes folder:' "$user_md" || printf '§\nNotes folder: %s\n' "$notes" >> "$user_md"
-    grep -q '^Personality strength:' "$user_md" || printf '§\nPersonality strength: %s/5\n' "$STRENGTH" >> "$user_md"
+    # Older installs said "Personality strength"; the council calls it character strength.
+    sed -i 's/^Personality strength:/Character strength:/' "$user_md"
+    grep -q '^Character strength:' "$user_md" || printf '§\nCharacter strength: %s/5\n' "${STRENGTH:-3}" >> "$user_md"
+    grep -q '^Council size:' "$user_md" || printf '§\nCouncil size: %s\n' "${COUNCIL_SIZE:-3}" >> "$user_md"
   fi
 }

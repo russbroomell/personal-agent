@@ -2,7 +2,7 @@
 # Helpers for the workspace port (sourced by remote-access.sh and check.sh).
 #
 # The host gateway can only serve the workspace if nothing else holds its
-# port. Leftovers from earlier attempts (an old sidekick-only gateway, a
+# port. Leftovers from earlier attempts (an old profile-only gateway, a
 # `hermes webapp`/`hermes dashboard` run by hand) keep the port, answer
 # requests themselves, and the real gateway logs
 # "Webapp unavailable: could not listen on 127.0.0.1:9120 (Address already in use)".

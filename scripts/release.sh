@@ -27,7 +27,7 @@ fi
 echo "Releasing v$V ($(git log --oneline -1)), tested with Hermes $(cat HERMES_VERSION)."
 read -r -p "Have you run this on your own server? [y/N] " a </dev/tty
 [[ "$a" =~ ^[Yy] ]] || die "Try it first: bash scripts/update.sh on your server."
-git tag -a "v$V" -m "Sidekick $V"
+git tag -a "v$V" -m "Council $V"
 git push origin "v$V"
 git push origin "HEAD:refs/heads/stable"
 echo "Done. Servers on auto-update pick up v$V tonight."

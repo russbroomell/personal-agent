@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Update Sidekick: pull this repo, refresh skills and house rules, update
-# Hermes itself, and rebuild SOUL.md with the personality you chose.
+# Update the Council: pull this repo, refresh skills and house rules, update
+# Hermes itself, and rebuild SOUL.md with the council seats you chose.
 # Memories, notes, chats, model choice and credentials are kept.
 set -euo pipefail
-PROFILE="${PROFILE:-sidekick}"
+PROFILE="${PROFILE:-council}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 git -C "$REPO_DIR" pull --ff-only
 hermes update || echo "hermes update reported a problem; carrying on." >&2
 hermes profile update "$PROFILE" -y
-bash "$HOME/.hermes/profiles/$PROFILE/skills/persona-switch/build-soul.sh"
-systemctl --user restart "sidekick-memory-card-$PROFILE.service" 2>/dev/null || true
+bash "${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE/skills/council/build-soul.sh"
+systemctl --user restart "council-memory-card-$PROFILE.service" 2>/dev/null || true
 # Restart the one host gateway (default profile), which serves $PROFILE too.
 timeout 120 hermes -p default gateway restart || echo "Gateway restart didn't confirm; check: hermes gateway list" >&2
-echo "Updated. Send /new to the bot to pick up any personality or rule changes."
+echo "Updated. Send /new to the bot to pick up any council or rule changes."

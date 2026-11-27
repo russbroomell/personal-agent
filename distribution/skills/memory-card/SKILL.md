@@ -2,7 +2,7 @@
 name: memory-card
 description: "Answer \"what do you know about me?\", forget things on request, and point the person to their Memory Card page where they can read and edit everything. Use for any question about what the assistant remembers or keeps."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:
@@ -13,7 +13,7 @@ metadata:
 # Memory Card
 
 ## "What do you know about me?"
-Answer honestly in your persona's voice, in three parts and at most 10 lines:
+Answer honestly in the council's voice (usually one member, the one whose lane fits), in three parts and at most 10 lines:
 1. Core memory: the essentials (name, place, rhythm, preferences).
 2. Topic notes: one line per notes file that has content ("people: 4 people,
    e.g. your sister Ana"; "money: 3 renewals").

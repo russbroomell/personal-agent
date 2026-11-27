@@ -19,6 +19,9 @@ Mode: live
 | Goals & habits | not started | |
 | Small business | not started | |
 | Faith, community & volunteering | not started | |
+| Automate my week | not started | |
+| Learn something | not started | |
+| Compete & grow | not started | |
 
 <!-- Status: not started · suggested · in progress (stopped at Qn) ·
      done YYYY-MM-DD · parked · not now · not for me -->

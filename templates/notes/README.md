@@ -5,8 +5,8 @@ subject comes up. Core facts live in core memory (USER.md and MEMORY.md); the
 full chat archive is searched on demand. You can read and edit all of these on
 the Memory Card page.
 
-`scripts/install-agent.sh` copies these templates into the agent's notes
-folder (`~/.hermes/profiles/sidekick/notes/`), never overwriting existing
+`install.sh` copies these templates into the agent's notes
+folder (`~/.hermes/profiles/council/notes/`), never overwriting existing
 files. Core memory holds the folder's path ("Notes folder: ...").
 
 Rules for the assistant (also in the house rules):

@@ -1,85 +1,90 @@
-# Talking to Sidekick
+# Talking to the Council
 
-Nov 3, 2026 · @Russ Broomell
+Nov 26, 2026 · @Russ Broomell
 
-There are two ways to talk to the assistant and hear it answer, and both are built into Hermes. Each personality has its own voice.
+The council is meant to be heard. Send a voice note with a decision and you get one voice bubble back, with Newton, Māui and Marcus each in their own voice. The `council-voices` plugin does this: it splits a reply at each `Name:` tag and speaks every line with that member's voice.
 
 | Way | Where | Feels like | Needs |
 | --- | --- | --- | --- |
-| **Voice notes** | Telegram, on your phone | Walkie-talkie: hold to talk, a voice bubble comes back | Nothing extra beyond `voice-setup.sh` |
-| **Live conversation** | The workspace in a browser (laptop or phone) | A phone call: talk naturally, it answers out loud, interrupt it any time | The Tailscale HTTPS address ([setup guide](setup-guide-ovh.md), Step 6, Route A), because browsers only allow the microphone over HTTPS |
+| **Voice notes** | Telegram, on your phone | Walkie-talkie: hold to talk, one voice bubble with every member who answers | `voice-setup.sh` |
+| **Live conversation** | The workspace in a browser (laptop or phone) | A phone call with the council: talk naturally, interrupt any time | The workspace, on an `https://` address (Tailscale) or `http://127.0.0.1` through an SSH tunnel |
 
 ## Turn it on (2 minutes)
 
-On the server, as `agent`:
-
-```bash
-bash ~/personal-agent/scripts/voice-setup.sh grok
-```
-
-This uses **Grok voices**: expressive, and every personality gets its own voice. Hermes adds delivery cues like `[laughs]` and `[pause]` automatically. Listening and speaking both go through your xAI sign-in, the same one as the chat model.
+On the server, as the user Hermes runs as:
 
 ```bash
 bash ~/personal-agent/scripts/voice-setup.sh free
 ```
 
-Use this instead if Grok's voice isn't available on your plan. It uses **free voices** (Microsoft Edge voices, no account), and listening runs on the server itself with Whisper. That costs about 300 MB of memory while in use, which is fine on 4 GB.
+Pick the engine that fits:
+
+| Engine | Command | Cast | Notes |
+| --- | --- | --- | --- |
+| **Free** (Edge voices) | `voice-setup.sh free` | A distinct voice for every member, including Māui's New Zealand voice and Newton's English one | No account. Listening runs on the server (Whisper, about 300 MB while in use) |
+| **Grok** | `voice-setup.sh grok` | Five Grok voices, shared at different speeds (Marcus slower, Remus quicker) | The same xAI sign-in as the chat model. Expressive tags like `[laughs]` |
+| **ElevenLabs** | `voice-setup.sh elevenlabs` | The best cast: a stock voice per member, sent as one dialogue so hand-offs sound natural | Paid API key (asked once, saved in the profile's `.env`) |
+
+Then, in Telegram, send `/voice on` once. It speaks back whenever *you* send a voice note. `/voice tts` speaks every reply (good in the car), and `/voice off` means text only.
+
+## How the voices work
+
+- Every line of a reply starts with a member's tag, like `Newton:`. The plugin speaks that line in Newton's voice and drops the tag.
+- Untagged text, and `All:` lines, are spoken by the chair (Marcus).
+- A name in the middle of a sentence ("I asked Newton: twice") isn't treated as a tag.
+- In a live conversation, Hermes speaks sentence by sentence as the model writes, and an untagged sentence keeps the last speaker's voice for 8 seconds (`tts.council.sticky_seconds`).
+- Links, addresses and long numbers are sent as text, not read aloud. The house rules say so, and keep a spoken reply under 30 seconds.
+
+## Change a member's voice
+
+For good, so it survives updates: edit their line in `distribution/skills/council/members/voices.conf` (columns: slug, Grok voice, Grok speed, Edge voice, Edge speed, ElevenLabs voice id), then run:
 
 ```bash
-bash ~/personal-agent/scripts/voice-setup.sh elevenlabs
+bash ~/personal-agent/scripts/update.sh
 ```
 
-**ElevenLabs voices** (paid; asks for your API key once and keeps it in the profile's `.env`). Best with Romulus and Remus: their lines are sent as one dialogue, so the hand-offs sound like two people in a room.
+For now, on this server only:
 
-Switching personality switches the voice too.
+```bash
+hermes -p council config set tts.council.voices.newton.edge en-GB-RyanNeural
+hermes -p council config set tts.council.engine elevenlabs   # which engine speaks
+```
 
-| Persona | Grok voice | Free voice | Delivery |
-| --- | --- | --- | --- |
-| Sam | sal | en-US-Guy | Measured, low-key, dry half-beat before the punchline |
-| Pip | ara (a bit faster) | en-US-Aria | Upbeat, smiling, the occasional laugh |
-| Mortimer | leo (a bit slower) | en-GB-Ryan (British) | Slow, precise, one raised eyebrow per sentence |
-| Rex | rex (a bit faster) | en-US-Davis | Crisp, energetic, excited only for wins |
-| Nova | eve | en-US-Jenny | Calm, clipped, like a radio channel |
-| Vic | rex (slow) | en-US-Christopher | Low, slow, world-weary, with a wink |
-| Romulus (lead) | sal (a bit slower) | en-US-Christopher | Lower, steady, unhurried |
-| Remus | rex (a bit faster) | en-US-Eric | Brighter, quicker, a smile in it |
+| Setting under `tts.council` | Default | What it does |
+| --- | --- | --- |
+| `engine` | the engine `voice-setup.sh` chose | `xai`, `edge` or `elevenlabs` |
+| `speakers` | the seated members | Who can speak |
+| `voices.<member>.<engine>` | from `voices.conf` | The voice, plus `xai_speed` and `edge_speed` |
+| `lead` | `marcus` | Speaks untagged and `All:` lines; members with no voice use his |
+| `labels` | `māui → maui`, etc. | Extra tag spellings |
+| `elevenlabs_dialogue` | `true` | One dialogue request instead of one per line |
 
-Romulus and Remus speak in two voices in the same reply. A small plugin that ships with Sidekick (`twin-voices`) reads the `Romulus:` / `Remus:` / `Both:` at the start of each line, speaks each line in that brother's voice with the engine you chose above, and sends one voice bubble. Setup and settings: [romulus-remus.md](romulus-remus.md).
-
-Change a voice in `distribution/skills/persona-switch/personas/voices.conf`, then run `bash ~/personal-agent/scripts/update.sh`.
-
-## Voice notes in Telegram
-
-- Hold the microphone in your bot's chat, talk, and let go. It transcribes, does the work, and replies with a voice bubble plus the text.
-- Send `/voice on` once. It then speaks back whenever *you* send a voice note. `/voice tts` speaks every reply, which is good in the car. `/voice off` means text only.
-- Links, addresses and long numbers come as text, not read aloud. The house rules say so.
+`build-soul.sh` rewrites these from `voices.conf` whenever it runs (after every update, and whenever a member is seated or benched).
 
 ## A live conversation in the browser
 
-1. Open your workspace at the `https://…ts.net` address (on your laptop, or your phone with the Tailscale app on).
+1. Open the workspace: your `https://…ts.net` address (`scripts/remote-access.sh`), or `http://127.0.0.1:9120` through the SSH tunnel that `install.sh` printed.
 2. In the chat box, the **microphone** is dictation. The button **to its right starts a full voice conversation**. Allow the microphone when the browser asks.
-3. Talk normally. It detects when you stop, answers out loud sentence by sentence as it thinks, and **you can interrupt it mid-sentence** (it knows it was interrupted). Say **"stop"** to end.
-4. Everything still works: errands, the browser screen, approvals. Approvals still need a tap or a clear "yes".
+3. Talk normally. It answers out loud, each member in their voice, and **you can interrupt it mid-sentence**. Say **"stop"** to end.
+4. Approvals still need a tap or a clear "yes".
 
-**Laptop tips:** use headphones or a headset in a demo room, because speaker echo can trigger interruptions. If it keeps cutting itself off, run `hermes -p sidekick config set voice.barge_in_threshold_multiplier 4`. If it's hard to interrupt, use `2`.
+**Tips:** use headphones, because speaker echo can trigger interruptions. If it keeps cutting itself off, run `hermes -p council config set voice.barge_in_threshold_multiplier 4`. If it's hard to interrupt, use `2`.
 
-**Faster replies when talking:** spoken turns use the main model with reasoning turned off, so they're quicker than typed ones. To use a faster model just for voice, set `auxiliary.voice_chat` (see the Hermes voice docs).
-
-## Not used here (and why)
-
-- **GPT-Live full-duplex voice** (in the Hermes desktop app): the most natural conversation, but it needs an OpenAI key and costs $0.05 a minute.
-- **Discord voice channels:** work well, but we use Telegram as the front door.
-- **Wake word ("hey Sidekick")**: works in the desktop app and the CLI. A nice later touch for a home PC.
+**Not with GPT-Live** (the desktop app's full-duplex mode): it uses one OpenAI voice and skips plugins, so the whole council sounds the same.
 
 ## If something goes wrong
 
 | What you hear or see | Try |
 | --- | --- |
-| No voice bubble, just an audio file | Install ffmpeg: `sudo apt-get install -y ffmpeg`, then `hermes -p default gateway restart` |
-| Grok voice errors, or `403` | Your xAI plan may not include voice: `bash ~/personal-agent/scripts/voice-setup.sh free` |
-| Voice conversation button missing or greyed out | You're on plain `http://`. Use the `https://…ts.net` address |
-| It transcribes the wrong words | Speak a little closer; set `stt.language` to your language; with `free`, try a bigger model: `hermes -p sidekick config set stt.local.model small` (more memory) |
-| Romulus and Remus sound like one voice | `hermes -p sidekick config get tts.provider` should say `twins`. If not, run `set-persona.sh romulus-remus` again. See [romulus-remus.md](romulus-remus.md) |
-| Voice doesn't match the personality | Run `bash ~/personal-agent/scripts/set-persona.sh <persona>` again, then `/new` |
+| One voice for everyone | `hermes -p council config get tts.provider` should say `council`, and `hermes -p council plugins list` should show `council-voices` enabled. Fix: `bash ~/.hermes/profiles/council/skills/council/build-soul.sh`, then `hermes -p default gateway restart` |
+| "Voice engine ... isn't ready" in the logs | The engine under `tts.council.engine` isn't set up. Run `voice-setup.sh` with `free`, `grok` or `elevenlabs` |
+| It reads a name aloud ("Newton colon") | A tag landed mid-sentence. Say "start every line with the name"; if it keeps happening, send `/new` |
+| An audio file instead of a voice bubble | Install ffmpeg (`sudo apt-get install -y ffmpeg`), then `hermes -p default gateway restart` |
+| Grok voice errors, or `403` | Your xAI plan may not include voice: `voice-setup.sh free` |
+| It transcribes the wrong words | Set `stt.language`; with `free`, try a bigger model: `hermes -p council config set stt.local.model small` (more memory) |
 
-Sources: [ElevenLabs Text to Dialogue](https://elevenlabs.io/docs/api-reference/text-to-dialogue/convert) · [Hermes voice mode](https://hermes-agent.nousresearch.com/docs/user-guide/features/voice-mode) · [Hermes voice and TTS](https://hermes-agent.nousresearch.com/docs/user-guide/features/tts) · [Desktop workspace in a browser](https://hermes-agent.nousresearch.com/docs/user-guide/desktop) · [xAI text to speech](https://docs.x.ai//developers/model-capabilities/audio/text-to-speech)
+## For developers
+
+The plugin is `distribution/plugins/council-voices/`, shipped with the profile. It registers a Hermes text-to-speech provider named `council`, splits replies with `speakers.py`, and speaks each line with Hermes's own engine (`engines.py`), so it reuses Hermes's keys and sign-ins. Parts are joined with ffmpeg into one Opus file. Tests: `python3 tests/council_voices/test_council_voices.py`, which is part of `tests/lint.sh`.
+
+It calls two Hermes internals (`tools.tts_tool._select_builtin_engine` and `_synthesize_builtin`), checked against the version in `HERMES_VERSION`. After a Hermes update, run the voice section of `tests/council-check.md`.

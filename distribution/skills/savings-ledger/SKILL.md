@@ -2,7 +2,7 @@
 name: savings-ledger
 description: "Log time and money the assistant saved, honestly, with proof. Use after any completed errand that saved time or money, and when asked \"how much have you saved me?\"."
 version: 0.1.0
-author: Sidekick
+author: The Council
 license: MIT
 metadata:
   hermes:

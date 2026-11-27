@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sidekick Memory Card: a private page to read and edit what the agent knows.
+"""Council Memory Card: a private page to read and edit what the agent knows.
 
 Serves core memory (memories/USER.md, memories/MEMORY.md), the topic notes
 folder, and recent scheduled-job output from one Hermes profile. Standard
@@ -8,7 +8,7 @@ library only. Binds to 127.0.0.1; reach it through an SSH tunnel:
     ssh -N -L 8765:127.0.0.1:8765 agent@YOUR_SERVER
 
 Usage:
-    server.py --home ~/.hermes/profiles/sidekick [--port 8765]
+    server.py --home ~/.hermes/profiles/council [--port 8765]
 
 A random access token is stored in <home>/memory-card.token. Open
 http://127.0.0.1:8765/?token=<token> once; the browser keeps a cookie.
@@ -252,7 +252,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--home", required=True, help="Hermes profile home, e.g. ~/.hermes/profiles/sidekick")
+    ap.add_argument("--home", required=True, help="Hermes profile home, e.g. ~/.hermes/profiles/council")
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--print-url", action="store_true", help="Print the access URL and exit")
     ap.add_argument("--allow-host", action="append", default=[],

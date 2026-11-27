@@ -24,4 +24,4 @@ will come and what it will ask.
 
 Saves to: goals.md.
 Careful: no weight, food or appearance commentary unless they explicitly ask
-for it. Never shame. Rex will want to run this one; let him.
+for it. Never shame. Florence hosts; Romulus keeps the score.

@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
-# Sidekick auto-update: keep the bot current from GitHub with no hands.
+# Council auto-update: keep the bot current from GitHub with no hands.
 #
 #   bash ~/personal-agent/scripts/auto-update.sh enable    # nightly at 04:30 (server time)
 #   bash ~/personal-agent/scripts/auto-update.sh enable --time 03:15 --tz America/Chicago
-#   bash ~/personal-agent/scripts/auto-update.sh enable --channel main  # follow main instead of stable
+#   bash ~/personal-agent/scripts/auto-update.sh enable --channel main  # follow another branch
 #   bash ~/personal-agent/scripts/auto-update.sh enable --hermes weekly # Hermes: tested (default) / weekly / daily / never
 #   bash ~/personal-agent/scripts/auto-update.sh status    # schedule + last result
 #   bash ~/personal-agent/scripts/auto-update.sh run       # do one update now
 #   bash ~/personal-agent/scripts/auto-update.sh disable
 #
 # Each night it:
-#   1. fetches the repo's `stable` branch (only tried-and-tested releases;
-#      `--channel main` follows every change instead) and fast-forwards to it
+#   0. backs up the profile first (scripts/backup.sh, newest 14 kept)
+#   1. fetches the branch it follows (default: the one you installed from,
+#      e.g. `stable`; `--channel NAME` picks another) and fast-forwards to it
 #      (never merges, never discards local changes: if it can't, it says why)
 #   2. updates Hermes itself only when this release says it was tested with
 #      a newer Hermes (file HERMES_VERSION). --hermes weekly/daily updates
 #      Hermes on a schedule instead, ahead of what's been tested
 #   3. if anything changed: refreshes the profile (skills, house rules),
-#      rebuilds SOUL.md with your chosen character, restarts the agent
+#      rebuilds SOUL.md with your council seats, restarts the agent
 #   4. runs the health check; if the refresh or restart failed, it rolls the
 #      repo back to the version that worked and restarts again
 # Memory, notes, chats, model sign-in and settings are never touched.
@@ -26,27 +27,31 @@
 # write the repo yourself, point it at your own fork (git remote set-url).
 set -uo pipefail
 
-PROFILE="${PROFILE:-sidekick}"
+PROFILE="${PROFILE:-council}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HH="$HOME/.hermes/profiles/$PROFILE"
-STATE="$HOME/.local/state/sidekick"
+HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
+STATE="$HOME/.local/state/council"
 LOG="$STATE/update.log"
 LAST="$STATE/last-update"
 CONF="$STATE/auto-update.conf"
-UNIT="sidekick-update"
+UNIT="council-update"
 UDIR="$HOME/.config/systemd/user"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 mkdir -p "$STATE"
 
 say() { printf '%s %s\n' "$(date '+%F %T')" "$*" | tee -a "$LOG"; }
 die() { echo "$*" >&2; exit 1; }
-[[ $EUID -ne 0 || -n "${SIDEKICK_ALLOW_ROOT:-}" ]] || die "Run as 'agent', not root."
+# Runs as whichever user Hermes is installed for (root works too).
 
 HERMES_EVERY="tested"; CHANNEL=""
 # shellcheck disable=SC1090
 [[ -r "$CONF" ]] && source "$CONF"
-# Configs from before channels existed had the old implicit default.
-if [[ -z "$CHANNEL" ]]; then CHANNEL="stable"; [[ "$HERMES_EVERY" == weekly ]] && HERMES_EVERY="tested"; fi
+# Default channel: the branch this copy was installed from (the Council lives
+# on its own branch until it becomes the base; `stable` would swap it out).
+if [[ -z "$CHANNEL" ]]; then
+  CHANNEL="$(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo stable)"
+  [[ "$CHANNEL" == HEAD ]] && CHANNEL="stable"
+fi
 
 enable() {
   local time="04:30" tz="" hermes="$HERMES_EVERY" channel="$CHANNEL"
@@ -67,7 +72,7 @@ enable() {
   mkdir -p "$UDIR"
   cat > "$UDIR/$UNIT.service" <<EOF
 [Unit]
-Description=Sidekick auto-update (repo + Hermes)
+Description=Council auto-update (repo + Hermes)
 After=network-online.target
 
 [Service]
@@ -78,7 +83,7 @@ Nice=10
 EOF
   cat > "$UDIR/$UNIT.timer" <<EOF
 [Unit]
-Description=Nightly Sidekick auto-update
+Description=Nightly Council auto-update
 
 [Timer]
 OnCalendar=*-*-* $time:00${tz:+ $tz}
@@ -114,24 +119,23 @@ status() {
 }
 
 restart_agent() {
-  systemctl --user restart "sidekick-memory-card-$PROFILE.service" 2>/dev/null || true
+  systemctl --user restart "council-memory-card-$PROFILE.service" 2>/dev/null || true
   timeout 120 hermes -p default gateway restart
 }
 
 apply_profile() {
-  hermes profile update "$PROFILE" -y && bash "$HH/skills/persona-switch/build-soul.sh" >/dev/null || return 1
-  # Guest bots (guest-bot.sh) get the same skills and rules.
-  local g
-  while read -r g; do
-    [[ -n "$g" && -d "$HOME/.hermes/profiles/$g" ]] || continue
-    hermes profile update "$g" -y && bash "$HOME/.hermes/profiles/$g/skills/persona-switch/build-soul.sh" >/dev/null || true
-  done < <(cat "$STATE/guests" 2>/dev/null)
+  hermes profile update "$PROFILE" -y && bash "$HH/skills/council/build-soul.sh" >/dev/null || return 1
+}
+
+snapshot() {   # nightly backup before anything changes (keeps 14)
+  bash "$REPO_DIR/scripts/backup.sh" >>"$LOG" 2>&1 || say "Backup didn't finish (see log); carrying on."
 }
 
 run() {
   exec 9>"$STATE/update.lock"
   flock -n 9 || { say "Another update is running; skipping."; return 0; }
   say "---- auto-update start"
+  snapshot
   local before after changed=0 result="no changes"
 
   # 1. This repo: fast-forward to the channel branch (stable by default).

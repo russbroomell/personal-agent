@@ -1,0 +1,4 @@
+name: council-voices
+version: 1.0.0
+description: "Many speaking voices in one reply: speaks each 'Name:' line in that council member's own voice (Grok, free Edge or ElevenLabs) and returns one voice note."
+author: The Council

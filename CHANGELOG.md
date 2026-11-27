@@ -4,7 +4,7 @@ Servers on auto-update follow the `stable` branch, which only moves when a
 release is published (`scripts/release.sh`). Each release names the Hermes
 Agent version it was tested with (file `HERMES_VERSION`).
 
-## 1.0.0-council (unreleased, branch `romulus-remus`)
+## 1.0.0-council (unreleased, on `main`)
 
 A new version: the Council. Tested so far with lint, unit tests and a
 simulated install; check it on a real Hermes 0.23.4 box with

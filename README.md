@@ -13,7 +13,7 @@
 
 Send that as a voice note and the answer comes back as one voice bubble, with each member in their own voice.
 
-Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. This branch (`romulus-remus`) is the new version and may become the base. `main` keeps the earlier six-character Sidekick.
+Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. The earlier six-character Sidekick is in the git history, and stays on the `stable` branch until the first Council release.
 
 ## The council
 
@@ -53,7 +53,7 @@ You need:
 Log in as the user Hermes runs as (root is fine), then:
 
 ```bash
-git clone -b romulus-remus https://github.com/russbroomell/personal-agent.git ~/personal-agent
+git clone -b main https://github.com/russbroomell/personal-agent.git ~/personal-agent
 ```
 
 ```bash
@@ -82,7 +82,7 @@ Starting from a bare server? Install Hermes first ([Hermes docs](https://hermes-
 
 | What | How |
 | --- | --- |
-| Nightly auto-update | `scripts/auto-update.sh enable`. It backs up the profile, fast-forwards this repo on the branch you installed from, updates Hermes only to the tested version in `HERMES_VERSION`, refreshes skills, rebuilds the personality with your seats, restarts, and rolls back if anything fails. `status` / `run` / `disable` |
+| Nightly auto-update | `scripts/auto-update.sh enable`. It backs up the profile, fast-forwards this repo on the branch you installed from, updates Hermes only to the tested version in `HERMES_VERSION`, refreshes skills, rebuilds the personality with your seats, restarts, and rolls back if anything fails. `status` / `run` / `disable`. Cloned from `main`, it follows `main` and gets every change as it lands. Don't switch it to `--channel stable` until the first Council release: `stable` still holds the old Sidekick |
 | Update by hand | `scripts/update.sh` |
 | Health check | `scripts/check.sh` (`--speed` times a reply and asks the council a test decision) |
 | Backups | `scripts/backup.sh`: nightly with auto-update, newest 14 kept in `~/council-backups` |

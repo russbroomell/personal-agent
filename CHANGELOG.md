@@ -34,6 +34,10 @@ simulated install; check it on a real Hermes 0.23.4 box with
   any number of speakers, a voice per member on Edge, Grok or ElevenLabs.
 - `install.sh` for a computer that already runs Hermes: reuses the existing
   model setup, can bring memory over from a Sidekick profile, works as root.
+- `install.sh --replace sidekick` upgrades a Sidekick server in place: backs
+  it up, stops its auto-update and Memory Card, copies its model, memory and
+  notes, moves its Telegram bot (same chat), and offers to rerun the first
+  chat. The old profile stays until `hermes profile delete sidekick`.
 - Auto-update follows the branch you installed from, and backs up first.
 - Removed (still in git history): the six characters, the two-voice
   character and `twin-voices` plugin from #13, bootstrap-vps.sh, setup.sh,

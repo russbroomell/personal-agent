@@ -13,6 +13,9 @@
 #   --yes                     take every recommended answer, no questions
 #   --profile NAME            profile to install as (default: council)
 #   --migrate-from NAME       copy memory and notes from another profile (e.g. sidekick)
+#   --replace NAME            replace that profile (e.g. sidekick): back it up, stop its
+#                             auto-update and Memory Card, copy its model, memory and notes,
+#                             and move its Telegram bot to the council (same chat)
 #   --voice grok|free|elevenlabs|skip
 #   --no-update               don't turn on nightly auto-update
 #   --no-check                skip the final health check
@@ -28,7 +31,7 @@
 set -euo pipefail
 
 PROFILE="${PROFILE:-council}"
-MIGRATE=""; VOICE=""; UPDATE=1; CHECK=1
+MIGRATE=""; REPLACE=""; VOICE=""; UPDATE=1; CHECK=1
 MC_PORT="${MC_PORT:-8765}"
 WEBAPP_PORT="${WEBAPP_PORT:-9120}"
 HOST_PROFILE="default"   # Hermes runs one gateway per machine, from its default profile
@@ -41,15 +44,22 @@ while [[ $# -gt 0 ]]; do
     --yes|-y) export COUNCIL_YES=1; shift ;;
     --profile) PROFILE="$2"; shift 2 ;;
     --migrate-from) MIGRATE="$2"; shift 2 ;;
+    --replace) REPLACE="$2"; MIGRATE="$2"; shift 2 ;;
     --voice) VOICE="$2"; shift 2 ;;
     --no-update) UPDATE=0; shift ;;
     --no-check) CHECK=0; shift ;;
-    -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "Unknown option: $1 (see --help)" >&2; exit 1 ;;
   esac
 done
 [[ "$PROFILE" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo "--profile: lower-case letters, digits, - and _ only." >&2; exit 1; }
 HH="$HERMES_ROOT/profiles/$PROFILE"
+if [[ -n "$REPLACE" ]]; then
+  [[ "$REPLACE" =~ ^[a-z0-9][a-z0-9_-]*$ && "$REPLACE" != "$PROFILE" && "$REPLACE" != default ]] \
+    || { echo "--replace: name another profile, like sidekick (not default or $PROFILE)." >&2; exit 1; }
+  [[ -d "$HERMES_ROOT/profiles/$REPLACE" ]] || { echo "--replace: no profile at $HERMES_ROOT/profiles/$REPLACE" >&2; exit 1; }
+fi
+OLD_HH="$HERMES_ROOT/profiles/${REPLACE:-none}"
 
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 ok()   { printf '  \033[1;32m✓\033[0m %s\n' "$*"; }
@@ -104,12 +114,50 @@ else
   ok "git, python3, curl, ffmpeg"
 fi
 
-# Where the existing model setup lives: the default profile, unless the
-# council profile already has one.
+# Offer to bring a Sidekick profile's memory over (or --migrate-from / --replace).
+if [[ -z "$MIGRATE" && -d "$HERMES_ROOT/profiles/sidekick/memories" && "$PROFILE" != sidekick && ! -s "$HH/memories/USER.md" ]]; then
+  ask "Found a Sidekick profile. Bring its memory and notes to the council? (To replace it, re-run with --replace sidekick)" Y && MIGRATE=sidekick
+fi
+
+# Where the existing model setup lives: the profile being replaced or
+# migrated from, if it has one, else the default profile.
 model_of() { hermes -p "$1" config get model.provider 2>/dev/null | tail -1; }
-SRC_MODEL="$(model_of "$HOST_PROFILE" || true)"
-if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then ok "existing model setup: $SRC_MODEL (default profile)"
-else echo "  No model on the default profile; you'll pick one in step 2."; fi
+SRC_MODEL=""; SRC_PROF="$HOST_PROFILE"; SRC_HOME="$HERMES_ROOT"
+if [[ -n "$MIGRATE" && "$MIGRATE" != default ]]; then
+  SRC_MODEL="$(model_of "$MIGRATE" || true)"
+  if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then SRC_PROF="$MIGRATE"; SRC_HOME="$HERMES_ROOT/profiles/$MIGRATE"; else SRC_MODEL=""; fi
+fi
+[[ -n "$SRC_MODEL" ]] || SRC_MODEL="$(model_of "$HOST_PROFILE" || true)"
+if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then ok "existing model setup: $SRC_MODEL ($SRC_PROF profile)"
+else echo "  No model set up yet; you'll pick one in step 2."; fi
+
+# ---------------------------------------------- replacing an older profile
+if [[ -n "$REPLACE" ]]; then
+  say "Retiring the '$REPLACE' profile (it stays on disk until you delete it)"
+  BK="$HOME/$REPLACE-backups"; mkdir -p "$BK"; chmod 700 "$BK"
+  if hermes -p "$REPLACE" backup -o "$BK/hermes-backup-$REPLACE-$(date +%Y%m%d-%H%M%S).zip" -k 14 >/dev/null 2>&1; then
+    chmod 600 "$BK"/*.zip 2>/dev/null || true; ok "backed up '$REPLACE' to $BK"
+  else
+    warn "Couldn't back up '$REPLACE' with hermes backup."
+    ask "Carry on without a backup?" N || die "Stopped. Back it up yourself, then re-run with --replace $REPLACE."
+  fi
+  # Its nightly updater would switch this repo back to its old branch.
+  UD="$HOME/.config/systemd/user"
+  for unit in sidekick-update "$REPLACE-update"; do
+    if [[ -f "$UD/$unit.timer" ]]; then
+      systemctl --user disable --now "$unit.timer" >/dev/null 2>&1 || true
+      rm -f "$UD/$unit.timer" "$UD/$unit.service"; ok "stopped its auto-update ($unit.timer)"
+    fi
+  done
+  # Its Memory Card page holds the port the council's wants.
+  for unit in "sidekick-memory-card-$REPLACE" "council-memory-card-$REPLACE"; do
+    if [[ -f "$UD/$unit.service" ]]; then
+      systemctl --user disable --now "$unit.service" >/dev/null 2>&1 || true
+      rm -rf "$UD/$unit.service" "$UD/$unit.service.d"; ok "stopped its Memory Card page ($unit)"
+    fi
+  done
+  systemctl --user daemon-reload >/dev/null 2>&1 || true
+fi
 
 # ---------------------------------------------------------- 2. profile
 say "Step 2 of 7: the '$PROFILE' profile"
@@ -123,9 +171,9 @@ fi
 
 # The model: reuse the one already set up, so there's nothing to re-enter.
 if [[ "$(model_of "$PROFILE" || true)" =~ ^(|None)$ ]]; then
-  if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]] && ask "Use your existing model setup ($SRC_MODEL) for the council?" Y; then
+  if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]] && ask "Use your existing model setup ($SRC_MODEL, from the $SRC_PROF profile) for the council?" Y; then
     # Copy the model block of config.yaml plus the sign-in files, never overwriting.
-    python3 - "$HERMES_ROOT/config.yaml" "$HH/config.yaml" <<'PY'
+    python3 - "$SRC_HOME/config.yaml" "$HH/config.yaml" <<'PY'
 import sys, re
 src, dst = sys.argv[1], sys.argv[2]
 def block(text, key):
@@ -139,10 +187,10 @@ if model and not block(d, "model"):
         f.write("\n" + model.rstrip() + "\n")
 PY
     for f in .env auth.json; do
-      if [[ -f "$HERMES_ROOT/$f" && ! -s "$HH/$f" ]]; then
-        # Model keys only; a Telegram token stays with its own bot (step 4).
-        if [[ "$f" == .env ]]; then grep -vE '^(TELEGRAM_|DISCORD_|SLACK_|WHATSAPP_|SIGNAL_)' "$HERMES_ROOT/$f" > "$HH/$f" || true
-        else cp "$HERMES_ROOT/$f" "$HH/$f"; fi
+      if [[ -f "$SRC_HOME/$f" && ! -s "$HH/$f" ]]; then
+        # Model keys only; a Telegram token moves only with --replace (step 4).
+        if [[ "$f" == .env ]]; then grep -vE '^(# moved to |TELEGRAM_|DISCORD_|SLACK_|WHATSAPP_|SIGNAL_)' "$SRC_HOME/$f" > "$HH/$f" || true
+        else cp "$SRC_HOME/$f" "$HH/$f"; fi
         chmod 600 "$HH/$f"
       fi
     done
@@ -157,10 +205,7 @@ M="$(model_of "$PROFILE" || true)"; [[ -n "$M" && "$M" != "None" ]] && ok "model
 hermes -p "$PROFILE" config set agent.reasoning_effort low >/dev/null || true
 hermes -p "$PROFILE" config set agent.disabled_toolsets '[]' >/dev/null || true
 
-# Optional: bring memory and notes over from another profile.
-if [[ -z "$MIGRATE" && -d "$HERMES_ROOT/profiles/sidekick/memories" && "$PROFILE" != sidekick && ! -s "$HH/memories/USER.md" ]]; then
-  ask "Found a Sidekick profile. Bring its memory and notes to the council?" Y && MIGRATE=sidekick
-fi
+# Bring memory and notes over from another profile (chosen in step 1).
 if [[ -n "$MIGRATE" ]]; then
   SRC="$HERMES_ROOT/profiles/$MIGRATE"; [[ "$MIGRATE" == default ]] && SRC="$HERMES_ROOT"
   [[ -d "$SRC" ]] || die "--migrate-from: no profile at $SRC"
@@ -180,6 +225,21 @@ source "$REPO_DIR/scripts/lib/starter.sh"
 seed_notes
 seed_user_memory
 ok "notes folder and starter memory in $HH"
+if [[ -n "$MIGRATE" ]] && grep -q '^First session: done' "$HH/memories/USER.md" 2>/dev/null; then
+  echo "Your memory came over marked 'first session done', so the council's 5-minute"
+  echo "first chat wouldn't run. It also sets up the council's brief and weekly jobs."
+  if ask "Run the council's first chat when you next say hi?" Y; then
+    # Drop that whole memory entry (entries are separated by lines holding only "§").
+    python3 - "$HH/memories/USER.md" <<'PY'
+import sys
+p = sys.argv[1]
+entries = [e.strip("\n") for e in open(p, encoding="utf-8").read().split("\n§\n")]
+keep = [e for e in entries if e.strip() and not e.strip().startswith("First session: done")]
+open(p, "w", encoding="utf-8").write("\n§\n".join(keep) + "\n")
+PY
+    ok "the first chat will run (it updates what's saved rather than starting over)"
+  fi
+fi
 for b in google-chrome google-chrome-stable chromium chromium-browser; do
   if BP="$(command -v "$b" 2>/dev/null)"; then
     hermes -p "$PROFILE" config set browser.executable_path "$BP" >/dev/null && ok "browser for errands: $BP"; break
@@ -188,8 +248,16 @@ done
 
 # -------------------------------------------------------- 4. messaging
 say "Step 4 of 7: messaging"
+if [[ -n "$REPLACE" ]] && ! grep -qsE '^TELEGRAM_BOT_TOKEN=.' "$HH/.env" && grep -qsE '^TELEGRAM_BOT_TOKEN=.' "$OLD_HH/.env"; then
+  if ask "Move $REPLACE's Telegram bot to the council (same chat; $REPLACE stops answering)?" Y; then
+    touch "$HH/.env"; chmod 600 "$HH/.env"
+    grep -E '^TELEGRAM_' "$OLD_HH/.env" >> "$HH/.env"
+    sed -i "s/^TELEGRAM_/# moved to $PROFILE: TELEGRAM_/" "$OLD_HH/.env"
+    ok "Telegram bot moved; $REPLACE's lines are commented out in its .env (uncomment to undo)"
+  fi
+fi
 if grep -qsE '^TELEGRAM_BOT_TOKEN=.' "$HH/.env"; then
-  ok "the council already has a Telegram bot"
+  ok "the council has a Telegram bot"
 else
   echo "The council needs its own Telegram bot (two profiles can't share one)."
   echo "In Telegram: message @BotFather, send /newbot, and copy the token. Your"
@@ -287,7 +355,7 @@ cat <<EOF
 
 $(printf '\033[1;32m')The council is seated.$(printf '\033[0m')
 
-Next, in Telegram: open the council's bot, tap Start, send /sethome, then say hi.
+Next, in Telegram: open the council's bot, tap Start, send /new and /sethome, then say hi.
 Marcus runs a 5-minute first chat: six quick questions and one real thing done.
 
 Handy:
@@ -298,3 +366,12 @@ Handy:
     ssh -N -L $WEBAPP_PORT:127.0.0.1:$WEBAPP_PORT -L $MC_PORT:127.0.0.1:$MC_PORT $(id -un)@<this server>
     then open http://127.0.0.1:$WEBAPP_PORT
 EOF
+if [[ -n "$REPLACE" ]]; then
+  cat <<DONE
+
+Replacing '$REPLACE': its profile is still on disk (backup in ~/$REPLACE-backups),
+and its old scheduled jobs (morning brief and so on) may still try to run with no
+bot to send to. When the council is working, remove it for good:
+  hermes profile delete $REPLACE
+DONE
+fi

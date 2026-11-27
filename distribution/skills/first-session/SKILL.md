@@ -17,6 +17,24 @@ met most of the council without a single introduction speech, and with
 something already done for them. Everything else (calendars, life areas,
 preferences) drips in later through the morning brief.
 
+## Personal mode (a Discord DM)
+
+When the turn note says this is a private Discord DM (council-privacy), run
+the same six questions with these differences:
+- Everything is saved in this person's private folder (the note names it):
+  their answers, council size, character strength, quiet hours and brief
+  time go in `profile.md` there, never in core memory or the shared notes.
+  Their own `onboarding-plan.md` and topic notes go in that folder too.
+- The welcome adds one line: "This DM is private. What you tell me here
+  stays between us, and I won't bring it up in public channels unless you
+  ask me to."
+- Scheduled jobs (question 5) are this person's own, delivered to this DM:
+  "Morning brief", "Open loops check" and "Friday recap". Each job's prompt
+  names their folder ("Use only notes/people/discord-<id>/ ...") and holds
+  nothing about anyone else. Skip "Weekly distill" and "Council minutes",
+  which work on the shared notes.
+- Finish by writing `First session: done YYYY-MM-DD` in their `profile.md`.
+
 Before you start, read onboarding-plan.md in the notes folder for the
 **mode**: `live` (default), `demo` (someone is being shown you, maybe with
 an audience: quick and showy, park anything personal) or `test-drive`. If

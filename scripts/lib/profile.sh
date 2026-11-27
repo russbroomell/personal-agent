@@ -64,6 +64,7 @@ sync_distribution() {  # sync_distribution <profile> <repo_dir>
   if [[ "$prof" != default ]]; then
     if [[ -f "$home/distribution.yaml" ]]; then hermes profile update "$prof" -y
     else hermes profile install "$repo/distribution" --name "$prof" --alias -y; fi
+    enable_council_plugins "$prof"
     return
   fi
   # The default profile isn't a distribution install, so copy the parts the
@@ -90,4 +91,21 @@ sync_distribution() {  # sync_distribution <profile> <repo_dir>
   done
   mv "$man.new" "$man"
   apply_council_config "$prof" "$repo"
+  enable_council_plugins "$prof"
+}
+
+# Plugins are opt-in in Hermes. council-privacy is always on (it only acts on
+# Discord); council-voices is turned on by build-soul.sh with the voices.
+enable_council_plugins() {
+  hermes -p "$1" plugins enable council-privacy >/dev/null 2>&1 \
+    || echo "!! couldn't enable the council-privacy plugin; run: hermes -p $1 plugins enable council-privacy" >&2
+}
+
+# Set KEY=VALUE in a profile's .env (replacing any existing line), private.
+set_env_line() {  # set_env_line <env file> <KEY> <value>
+  local f="$1" key="$2" value="$3"
+  touch "$f"; chmod 600 "$f"
+  grep -v "^$key=" "$f" > "$f.tmp" || true
+  printf '%s=%s\n' "$key" "$value" >> "$f.tmp"
+  mv "$f.tmp" "$f"; chmod 600 "$f"
 }

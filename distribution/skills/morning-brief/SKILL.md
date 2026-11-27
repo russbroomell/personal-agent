@@ -19,6 +19,11 @@ for a packed calendar, Newton when a bill is due, Florence after a hard
 week, Odysseus before a negotiation). One other member may add one line,
 only if it saves time or money. Tag every line.
 
+**A person's private folder.** If the job's prompt names a private folder
+(`notes/people/<platform>-<id>/`), this brief is for that one person: use
+only that folder for every note named below, read `profile.md` there
+instead of core memory, and mention nothing about anyone else.
+
 Gather (skip any source you don't have, silently):
 1. Core memory: name, town, time zone, quiet hours, character strength,
    council size; notes/council.md for who they like hearing from.

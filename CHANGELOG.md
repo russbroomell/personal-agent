@@ -34,6 +34,17 @@ simulated install; check it on a real Hermes 0.23.4 box with
   any number of speakers, a voice per member on Edge, Grok or ElevenLabs.
 - `install.sh` for a computer that already runs Hermes: reuses the existing
   model setup, can bring memory over from a Sidekick profile, works as root.
+- **Discord first, with a private council for each person.** New
+  `council-privacy` plugin: every Discord user who DMs the bot gets their
+  own first chat and private folder (`notes/people/discord-<id>/`), and
+  nothing from a DM appears in a public channel unless that person asks
+  to share their own information there. Enforced in code too: tool calls
+  that would read another person's folder, search everyone's notes or
+  chats, write shared core memory, or read the session database are
+  blocked on Discord. Public channels answer without an @mention. The
+  installer leads with Discord, asks who may use it, and `--replace`
+  moves Discord bots too; the health check has a Discord section.
+- Simple questions about the bot itself get Marcus alone.
 - `install.sh` puts the council in Hermes's **default profile** by default,
   using the model and Telegram bot already set up there. It backs the
   profile up first, keeps any earlier personality as

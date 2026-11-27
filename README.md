@@ -11,7 +11,9 @@
 > **Marcus:** Fix it and wrap it. You get a year to save, and free advertising.
 > `[Fix + wrap]` `[Get quotes on both]` `[Just fix it]`
 
-Send that as a voice note and the answer comes back as one voice bubble, with each member in their own voice.
+Send that as a voice note and the answer comes back as audio, with each member in their own voice.
+
+**Made for Discord.** Everyone who DMs the bot gets their own private council: their own first chat, morning brief and private notebook. In your server's public channels it chats with whoever's there, no @mention needed, and never repeats anything from anyone's DMs. Telegram works too, for one person. See [docs/discord.md](docs/discord.md).
 
 Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. The earlier six-character Sidekick is in the git history, and stays on the `stable` branch until the first Council release.
 
@@ -33,7 +35,8 @@ They're built to pull against each other (Newton against Māui, Romulus against 
 
 ## What it's like
 
-- **Short by design.** Routine replies are one or two lines, and decisions five at most, with buttons for every choice. "More" expands only when you ask.
+- **A private council for each person on Discord.** DMs are personal and confidential: each person's details live in their own folder. The `council-privacy` plugin blocks, in code, anything that would cross from one person to another or into a public channel. Public channels get a helpful, discreet council that answers without an @mention.
+- **Short by design.** Questions about the bot itself get Marcus alone. Routine replies are one or two lines, and decisions five at most, with buttons for every choice. "More" expands only when you ask.
 - **No long prompts from you.** Forward an email, a photo or a voice ramble with "deal with this". A vague ask gets one pointed question with buttons, not a questionnaire.
 - **Voice first.** Voice notes in, a voice bubble out with a voice per member (free Edge voices, Grok, or ElevenLabs). Live conversation in the browser workspace, interruptible. See [docs/voice.md](docs/voice.md).
 - **A 5-minute start.** Marcus asks six questions, and a different member reacts to each answer, so you meet the council while it does a real errand for you. Everything else drips in, one optional item a day in the morning brief.
@@ -47,10 +50,10 @@ They're built to pull against each other (Newton against Māui, Romulus against 
 
 You need:
 - Hermes Agent (0.23 or newer) installed, with a working model. Any provider is fine; a fast one feels best in chat.
-- Telegram already set up in Hermes (`hermes gateway setup`), or a bot token from @BotFather to set it up during the install.
+- **Discord** set up in Hermes (`hermes gateway setup`, then pick Discord), or a bot token to set it up during the install ([docs/discord.md](docs/discord.md) has the three steps). Telegram works instead, for one person.
 - About 10 minutes. Debian or Ubuntu is assumed for package installs.
 
-The Council moves into Hermes's **default profile**, so it uses the model and Telegram bot you already set up, exactly as they are. Before changing anything, the installer backs up the default profile to `~/council-backups`. Any personality file that was there before is kept as `~/.hermes/SOUL.md.before-council`.
+The Council moves into Hermes's **default profile**, so it uses the model and chat bot you already set up, exactly as they are. Before changing anything, the installer backs up the default profile to `~/council-backups`. Any personality file that was there before is kept as `~/.hermes/SOUL.md.before-council`.
 
 Log in as the user Hermes runs as (root is fine), then:
 
@@ -67,19 +70,19 @@ It asks yes/no before each optional step (Enter takes the recommended answer; `-
 | Step | What happens | You're asked |
 | --- | --- | --- |
 | 1. Pre-flight | Checks Hermes, its version against `HERMES_VERSION`, your model, and `git`, `python3`, `curl`, `ffmpeg` | Update Hermes if it's older; install missing tools |
-| 2. Profile | Backs up the default profile, then adds the Council's skills, voice plugin and settings to it, one setting at a time, so your model, keys and Telegram are kept | Nothing, unless the backup fails |
+| 2. Profile | Backs up the default profile, then adds the Council's skills, voice plugin and settings to it, one setting at a time, so your model, keys and chat bot are kept | Nothing, unless the backup fails |
 | 3. Seating | Builds the personality file (chair's rules, nine member cards, house rules), member voices, notes and starter memory | Nothing |
-| 4. Messaging | Uses your Telegram bot, or sets one up if there isn't one | Your bot token and user id, only if needed |
+| 4. Messaging | Uses your Discord (or Telegram) bot, or sets one up, leading with Discord. On Discord, it answers in public channels without an @mention | Who may talk to it (default: your allowlist); a bot token, only if there isn't one |
 | 5. Services | The 24/7 gateway, the Memory Card page, and staying up after logout | Memory Card? Linger? |
 | 6. Extras | Voices; the browser workspace (live voice, the bot's screen); nightly auto-update with backup and rollback; Tailscale remote access | `free` / `grok` / `elevenlabs` / `skip`, then yes/no for each |
 | 7. Check | Health check with a `fix:` line for anything wrong, plus a test question that two council members must answer | Nothing |
 
-Then, in Telegram, send `/new` and `/sethome`, and say **hi**. Marcus runs the 5-minute first chat.
+Then, on Discord, DM the bot and say **hi**: Marcus runs your private 5-minute first chat, and so does everyone else who DMs it. Send `/sethome` in the channel where proactive messages should go. On Telegram, send `/new` and `/sethome`, then say hi.
 
 Run `install.sh` again any time: it refreshes the Council and never touches memory, notes, chats, the model or keys. The profile it used is remembered, so updates, the health check and the other scripts all work on the same one.
 
 Options:
-- `--profile NAME` puts the Council in a separate, new profile instead of the default one. It copies your model setup but not your Telegram bot, since two profiles can't share one, so it needs its own.
+- `--profile NAME` puts the Council in a separate, new profile instead of the default one. It copies your model setup but not your chat bot, since two profiles can't share one, so it needs its own.
 - `--replace PROFILE` replaces an older profile (see below).
 - `--migrate-from PROFILE` copies memory and notes from another profile without replacing it.
 - `--voice free|grok|elevenlabs|skip`, `--no-update` and `--no-check` skip those questions.
@@ -104,10 +107,10 @@ bash ~/personal-agent/install.sh --replace sidekick
 - backs up the Sidekick profile to `~/sidekick-backups`;
 - stops Sidekick's nightly auto-update (which would switch the copy back to `stable`) and its Memory Card page;
 - copies its memory and notes, and its model setup if the default profile has none;
-- moves its Telegram bot to the Council, so you keep the same chat, unless the default profile already has a bot;
+- moves its Discord and Telegram bots to the Council, so you keep the same chats, unless the default profile already has a bot on that app;
 - offers to rerun the Council's 5-minute first chat, which also sets up the Council's brief and weekly jobs.
 
-The Sidekick profile stays on disk, with any bot lines that moved commented out so you can undo. When the Council is working, send `/new` and `/sethome` in Telegram, then remove Sidekick for good:
+The Sidekick profile stays on disk, with any bot lines that moved commented out so you can undo. When the Council is working, say hi in a DM (Discord) or send `/new` and `/sethome` (Telegram), then remove Sidekick for good:
 
 ```bash
 hermes profile delete sidekick
@@ -115,7 +118,7 @@ hermes profile delete sidekick
 
 If you've already uninstalled Sidekick, or never installed it, there's nothing to replace: run plain `install.sh`.
 
-Starting from a bare server? Install Hermes first ([Hermes docs](https://hermes-agent.nousresearch.com/docs)), set up its model and Telegram, and add swap on a 4 GB machine with `sudo bash ~/personal-agent/scripts/add-swap.sh`. Then run `install.sh`.
+Starting from a bare server? Install Hermes first ([Hermes docs](https://hermes-agent.nousresearch.com/docs)), set up its model and Discord, and add swap on a 4 GB machine with `sudo bash ~/personal-agent/scripts/add-swap.sh`. Then run `install.sh`.
 
 ## Looking after itself
 
@@ -140,7 +143,7 @@ bash ~/personal-agent/scripts/check.sh                   # health check, with fi
 
 ## Privacy
 
-Your memory, notes and chats live as plain files on your own server, and you can read and edit them on the Memory Card. This version doesn't try to keep data away from model or tool providers: use whichever model and services work best. Only SSH needs to be open to the internet; the workspace and Memory Card are reached through an SSH tunnel or Tailscale.
+Your memory, notes and chats live as plain files on your own server, and you can read and edit them on the Memory Card. On Discord, each person's DM is private from everyone else and from public channels, enforced by the `council-privacy` plugin; [docs/discord.md](docs/discord.md#what-stays-private-and-how) explains how, and the limits (core memory and the shared notes folder are visible to every conversation, and the server owner can read everything). This version doesn't try to keep data away from model or tool providers: use whichever model and services work best. Only SSH needs to be open to the internet; the workspace and Memory Card are reached through an SSH tunnel or Tailscale.
 
 ## What's in the repo
 
@@ -152,11 +155,12 @@ Your memory, notes and chats live as plain files on your own server, and you can
 | `distribution/skills/convene/`, `council-minutes/`, `first-session/` | Full council · weekly self-tuning · 5-minute onboarding |
 | `distribution/skills/*` | Morning brief, open loops, watchers, Friday recap, weekly distill, deep dives (thirteen areas, three hosted by the bench), inbox triage, meeting prep, browser hand-off, Memory Card, savings ledger, show-off, share card, kill switch |
 | `distribution/plugins/council-voices/` | Speaks each member's lines in their own voice |
+| `distribution/plugins/council-privacy/` | Discord: a private DM for each person, and nothing from DMs in public channels |
 | `scripts/` | `check.sh`, `update.sh`, `auto-update.sh`, `voice-setup.sh`, `backup.sh`, `remote-access.sh`, `add-swap.sh`, `release.sh`, the Memory Card server, and `lib/profile.sh` (which profile the Council is in, and how it's installed and refreshed there) |
-| `docs/council.md` · `docs/voice.md` · `docs/models.md` | How it works · talking to it · choosing a model |
+| `docs/council.md` · `docs/discord.md` · `docs/voice.md` · `docs/models.md` | How it works · Discord and privacy · talking to it · choosing a model |
 | `docs/council-plan.md` | The plan behind this version |
 | `docs/archive/` | Planning and research from the earlier version |
-| `tests/` | `lint.sh`, plugin unit tests, `council-check.md` |
+| `tests/` | `lint.sh`, unit tests for both plugins, `council-check.md` |
 
 ## Contributing
 

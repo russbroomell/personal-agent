@@ -128,6 +128,31 @@ JOBS="$(timeout 20 hermes -p "$PROFILE" cron list 2>/dev/null || true)"
 if grep -qi "morning brief" <<<"$JOBS"; then ok "scheduled jobs: $(grep -ciE 'brief|loops|recap|distill|minutes' <<<"$JOBS") council jobs"
 else meh "no morning brief scheduled yet (the first chat sets it up: say hi to the bot)"; fi
 
+if grep -qsE '^DISCORD_BOT_TOKEN=.' "$HH/.env"; then
+  head_ "Discord"
+  ok "bot token set"
+  PRIV="$(timeout 20 hermes -p "$PROFILE" plugins list 2>/dev/null | grep -i council-privacy || true)"
+  if [[ -z "$PRIV" ]] || grep -qiE 'disabled|off|no\b' <<<"$PRIV"; then
+    bad "council-privacy plugin isn't on: DMs wouldn't be kept private from public channels"
+    fix "hermes -p $PROFILE plugins enable council-privacy && hermes -p default gateway restart"
+  else ok "council-privacy plugin on (each person's DM is private)"; fi
+  RM="$(cfg "$PROFILE" discord.require_mention)"
+  if grep -qsE '^DISCORD_REQUIRE_MENTION=(true|1|yes)' "$HH/.env" || [[ "$RM" =~ ^(True|true)$ ]]; then
+    meh "public channels need an @mention (fine if you chose that)"
+    fix "hermes -p $PROFILE config set discord.require_mention false  (and drop DISCORD_REQUIRE_MENTION from .env)"
+  else ok "answers in public channels without an @mention"; fi
+  if grep -qsE '^(DISCORD_ALLOW_ALL_USERS|GATEWAY_ALLOW_ALL_USERS)=(true|1|yes)' "$HH/.env"; then ok "access: everyone who can reach the bot"
+  elif grep -qsE '^DISCORD_ALLOWED_(USERS|ROLES)=.' "$HH/.env"; then ok "access: allowlisted users or roles"
+  else bad "nobody is allowlisted, so the bot answers no one"; fix "hermes -p $PROFILE gateway setup  (or set DISCORD_ALLOWED_USERS in $HH/.env)"; fi
+  # Core memory is loaded in every chat, public ones included: keep people out of it.
+  if [[ -f "$HH/memories/USER.md" ]] && grep -qvE '^(§|Notes folder:|Council size:|Character strength:|Memory Card:|Screen:|First session:|Assistant name:)|^$' "$HH/memories/USER.md"; then
+    meh "core memory (USER.md) holds more than settings; on Discord every chat loads it, public channels too"
+    fix "move personal lines into notes/people/discord-<your id>/profile.md (Memory Card), then trim USER.md"
+  fi
+  PEOPLE="$(find "$HH/notes/people" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
+  echo "  private folders: $PEOPLE (one per person who has DMed it)"
+fi
+
 head_ "Workspace (bot screen in a browser)"
 [[ "$(cfg "$HOST_PROFILE" webapp.enabled)" == "True" || "$(cfg "$HOST_PROFILE" webapp.enabled)" == "true" ]] \
   && ok "turned on" || { meh "turned off (optional: needed for live voice and watching the bot's browser)"; fix "bash ~/personal-agent/install.sh  (answer yes to the workspace), or remote-access.sh"; }

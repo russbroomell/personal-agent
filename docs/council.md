@@ -29,6 +29,7 @@ Each member is one Markdown file in `distribution/skills/council/members/`. The 
 
 | Mode | When | Example |
 | --- | --- | --- |
+| **Marcus alone** | A simple question about the bot itself: what it is, what it can do, how to use it, who's on the council, a setting | `Marcus: I'm a council of nine. Ask me anything; the right voice answers. Say "who's on the council?" to meet them.` |
 | **Solo** | Routine: add, move, remind, look up | `Romulus: Done. Dentist moved to Thursday at 3.` |
 | **Duet** | A choice with a trade-off | Two members from a tension pair, then Marcus (3 lines) |
 | **Council** | A bigger decision | Up to three members, then Marcus (5 lines at most) |
@@ -97,6 +98,8 @@ The rules of debate (in `chair.md`, part of every chat) keep that from turning i
 Every Sunday the **council minutes** job reads the week. It looks at who you asked for, who you cut off, and whose advice you took. It makes at most two small changes, such as "Māui shorter on work topics", and tells you in one line with how to undo it. It never changes skills, rules or who's seated; it only suggests those. The Friday recap gives a line to the member whose advice you took most.
 
 ## Onboarding
+
+On Discord, this runs for each person in their own DM, saving to their private folder; see [discord.md](discord.md).
 
 The first chat takes about five minutes. Marcus asks six questions, and a different member reacts to each answer, so you meet the council without a pitch:
 

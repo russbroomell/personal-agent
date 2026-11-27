@@ -5,7 +5,7 @@
 #   bash ~/personal-agent/install.sh
 #
 # Assumes Hermes is installed and has a working model (LLM). By default the
-# council moves into Hermes's default profile, so the model and Telegram bot
+# council moves into Hermes's default profile, so the model and chat bot
 # you set up already are used as they are (it backs the profile up first).
 # Run it as the user Hermes runs as (root is fine). Safe to run again: it
 # refreshes what's there and never touches memory, notes, chats or keys.
@@ -14,11 +14,11 @@
 # Options:
 #   --yes                     take every recommended answer, no questions
 #   --profile NAME            profile to install into (default: Hermes's own default
-#                             profile, keeping its model and Telegram; or a new one, e.g. council)
+#                             profile, keeping its model and chat bot; or a new one, e.g. council)
 #   --migrate-from NAME       copy memory and notes from another profile (e.g. sidekick)
 #   --replace NAME            replace that profile (e.g. sidekick): back it up, stop its
 #                             auto-update and Memory Card, copy its model, memory and notes,
-#                             and move its Telegram bot to the council (same chat)
+#                             and move its Discord or Telegram bot to the council (same chats)
 #   --voice grok|free|elevenlabs|skip
 #   --no-update               don't turn on nightly auto-update
 #   --no-check                skip the final health check
@@ -27,7 +27,7 @@
 #   1. Pre-flight: Hermes, its version, a model, and a few system tools
 #   2. Install (or update) the council profile and its model settings
 #   3. Build the council's SOUL, voices, notes and starter memory
-#   4. Messaging: a Telegram bot for the council (or later, in the workspace)
+#   4. Messaging: Discord (recommended: private DMs per person, public channels) or Telegram
 #   5. Background services: the 24/7 gateway and the Memory Card page
 #   6. Voice, auto-update, and (optionally) remote access with Tailscale
 #   7. Health check, including a test question to the council
@@ -83,7 +83,7 @@ cat <<'INTRO'
 
 The Council: one personal assistant, many voices.
 About 5-10 minutes. You'll be asked a few yes/no questions, and optionally
-for a Telegram bot token and a voice choice. Ctrl+C is safe at any point;
+for a Discord or Telegram bot token and a voice choice. Ctrl+C is safe at any point;
 run this again to carry on.
 INTRO
 
@@ -175,7 +175,7 @@ if council_installed "$PROFILE"; then
   echo "Updating the council there (memory, notes, chats, model and keys are kept)..."
 elif [[ "$PROFILE" == default ]]; then
   # First time in the default profile: it already holds a setup (model,
-  # Telegram, maybe its own personality), so back it up before changing it.
+  # chat bot, maybe its own personality), so back it up before changing it.
   BK="$HOME/council-backups"; mkdir -p "$BK"; chmod 700 "$BK"
   if hermes -p default backup -o "$BK/hermes-backup-default-before-council-$(date +%Y%m%d-%H%M%S).zip" -k 14 >/dev/null 2>&1; then
     chmod 600 "$BK"/*.zip 2>/dev/null || true; ok "backed up the default profile to $BK"
@@ -185,7 +185,7 @@ elif [[ "$PROFILE" == default ]]; then
       || die "Stopped. Back it up yourself (hermes backup), then re-run."
   fi
   echo "Adding the council's skills, voice plugin and settings to the default profile."
-  echo "Your model, keys and Telegram setup stay as they are."
+  echo "Your model, keys and chat bot setup stay as they are."
 fi
 sync_distribution "$PROFILE" "$REPO_DIR"
 [[ -d "$HH/skills/council" ]] || die "The council's skills didn't land in $HH/skills; see the output above."
@@ -210,7 +210,7 @@ if model and not block(d, "model"):
 PY
     for f in .env auth.json; do
       if [[ -f "$SRC_HOME/$f" && ! -s "$HH/$f" ]]; then
-        # Model keys only; a Telegram token moves only with --replace (step 4).
+        # Model keys only; a bot token moves only with --replace (step 4).
         if [[ "$f" == .env ]]; then grep -vE '^(# moved to |TELEGRAM_|DISCORD_|SLACK_|WHATSAPP_|SIGNAL_)' "$SRC_HOME/$f" > "$HH/$f" || true
         else cp "$SRC_HOME/$f" "$HH/$f"; fi
         chmod 600 "$HH/$f"
@@ -271,26 +271,81 @@ done
 
 # -------------------------------------------------------- 4. messaging
 say "Step 4 of 7: messaging"
-if [[ -n "$REPLACE" ]] && ! grep -qsE '^TELEGRAM_BOT_TOKEN=.' "$HH/.env" && grep -qsE '^TELEGRAM_BOT_TOKEN=.' "$OLD_HH/.env"; then
-  if ask "Move $REPLACE's Telegram bot to the council (same chat; $REPLACE stops answering)?" Y; then
-    touch "$HH/.env"; chmod 600 "$HH/.env"
-    grep -E '^TELEGRAM_' "$OLD_HH/.env" >> "$HH/.env"
-    sed -i "s/^TELEGRAM_/# moved to $PROFILE: TELEGRAM_/" "$OLD_HH/.env"
-    ok "Telegram bot moved; $REPLACE's lines are commented out in its .env (uncomment to undo)"
-  fi
+has_bot() { grep -qsE "^$1_BOT_TOKEN=." "$HH/.env"; }
+# Replacing an older profile: bring its bots along (same chats), unless the
+# council already has its own bot on that app.
+if [[ -n "$REPLACE" ]]; then
+  for app in DISCORD TELEGRAM; do
+    if [[ "$app" == DISCORD ]]; then name=Discord; else name=Telegram; fi
+    if ! has_bot "$app" && grep -qsE "^${app}_BOT_TOKEN=." "$OLD_HH/.env"; then
+      if ask "Move $REPLACE's $name bot to the council (same chats; $REPLACE stops answering)?" Y; then
+        touch "$HH/.env"; chmod 600 "$HH/.env"
+        grep -E "^${app}_" "$OLD_HH/.env" >> "$HH/.env"
+        sed -i "s/^${app}_/# moved to $PROFILE: ${app}_/" "$OLD_HH/.env"
+        ok "$name bot moved; $REPLACE's lines are commented out in its .env (uncomment to undo)"
+      fi
+    fi
+  done
 fi
-if grep -qsE '^TELEGRAM_BOT_TOKEN=.' "$HH/.env"; then
-  ok "the council has a Telegram bot"
-else
-  echo "The council needs its own Telegram bot (two profiles can't share one)."
-  echo "In Telegram: message @BotFather, send /newbot, and copy the token. Your"
-  echo "numeric user id comes from @userinfobot."
-  if tty_ok && ask "Set up the council's Telegram bot now?" Y; then
-    hermes -p "$PROFILE" gateway setup </dev/tty || warn "Wizard exited; later: hermes -p $PROFILE gateway setup"
+
+if ! has_bot DISCORD && ! has_bot TELEGRAM; then
+  echo "The council talks to people through a chat app. Discord is recommended:"
+  echo "everyone gets a private DM with their own setup, and the council can also"
+  echo "chat in your server's public channels. Telegram works too, for one person."
+  echo "Two profiles can't share one bot, so this needs a bot of its own."
+  APP=skip
+  if tty_ok; then
+    read -r -p "Which? [discord/telegram/skip] (discord) " APP </dev/tty || APP=skip
+    APP="${APP:-discord}"
+  fi
+  case "$APP" in
+    discord)
+      cat <<'TIPS'
+  Discord, in short (the wizard checks each step):
+    1. discord.com/developers/applications > New Application > Bot > Reset Token, copy it.
+    2. On the Bot page, turn on Message Content Intent and Server Members Intent.
+    3. In the wizard below, pick Discord and paste the token; it prints the invite link
+       for your server and allowlists you as the owner.
+TIPS
+      hermes -p "$PROFILE" gateway setup </dev/tty || warn "Wizard exited; later: hermes -p $PROFILE gateway setup" ;;
+    telegram)
+      echo "  In Telegram: message @BotFather, send /newbot, copy the token; your user id comes from @userinfobot."
+      hermes -p "$PROFILE" gateway setup </dev/tty || warn "Wizard exited; later: hermes -p $PROFILE gateway setup" ;;
+    *) echo "  Later: hermes -p $PROFILE gateway setup   (pick Discord or Telegram)" ;;
+  esac
+fi
+
+if has_bot DISCORD; then
+  ok "the council has a Discord bot"
+  # Public channels without an @mention (config.yaml sets it; an .env line would win).
+  if grep -qsE '^DISCORD_REQUIRE_MENTION=(true|1|yes)' "$HH/.env"; then
+    if ask "Your .env makes Discord wait for an @mention. Let the council answer in public channels without one?" Y; then
+      set_env_line "$HH/.env" DISCORD_REQUIRE_MENTION false
+    fi
+  fi
+  echo "  Public channels: it answers without an @mention, stays quiet when a message"
+  echo "  only @mentions other people, and keeps each person's session separate."
+  echo "  To limit it to some channels: hermes -p $PROFILE config set discord.require_mention true"
+  echo "  and list the channel ids in discord.free_response_channels."
+  # Who may talk to it. The setup wizard allowlists the owner only.
+  if grep -qsE '^(DISCORD_ALLOW_ALL_USERS|GATEWAY_ALLOW_ALL_USERS)=(true|1|yes)' "$HH/.env"; then
+    ok "Discord access: everyone who can reach the bot"
+  elif grep -qsE '^DISCORD_ALLOWED_ROLES=.' "$HH/.env"; then
+    ok "Discord access: members with the allowed role(s), plus anyone on the user allowlist"
   else
-    echo "  Later: hermes -p $PROFILE gateway setup   (or the workspace: Messaging > Telegram > Create with QR)"
+    echo "  Who can talk to it: right now only the people on its allowlist (you, from the wizard)."
+    echo "  Everyone who DMs it gets their own private setup, so letting more people in is safe;"
+    echo "  it does mean more model use."
+    if ask "Let everyone in your Discord server(s) talk to the council?" N; then
+      set_env_line "$HH/.env" DISCORD_ALLOW_ALL_USERS true
+      ok "Discord access: everyone who can reach the bot"
+    else
+      echo "  Kept to the allowlist. Add people later: DISCORD_ALLOWED_USERS=<id>,<id> or"
+      echo "  DISCORD_ALLOWED_ROLES=<role id> in $HH/.env, then restart the gateway."
+    fi
   fi
 fi
+has_bot TELEGRAM && ok "the council has a Telegram bot (it works for one person, its owner)"
 
 # ----------------------------------------------- 5. background services
 say "Step 5 of 7: background services"
@@ -378,8 +433,11 @@ cat <<EOF
 
 $(printf '\033[1;32m')The council is seated.$(printf '\033[0m')
 
-Next, in Telegram: open the council's bot, tap Start, send /new and /sethome, then say hi.
-Marcus runs a 5-minute first chat: six quick questions and one real thing done.
+Next:
+  Discord:  DM the bot and say hi. Marcus runs a private 5-minute first chat; everyone
+            who DMs it gets their own. In a server channel, just talk, no @mention needed.
+            Send /sethome in the channel where morning briefs and reminders should go.
+  Telegram: open the bot, tap Start, send /new and /sethome, then say hi.
 
 Handy:
   Chat in the terminal:            hermes -p $PROFILE

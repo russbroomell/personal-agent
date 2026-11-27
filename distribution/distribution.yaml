@@ -8,11 +8,13 @@ license: "MIT"
 # listed: skills/council/build-soul.sh builds it from the chair's rules, the
 # seated members and the house rules, and the seats chosen (council.conf)
 # must survive updates. Notes, memories and sessions are user data and are
-# never shipped. plugins/council-voices speaks each member in their voice.
+# never shipped. plugins/council-voices speaks each member in their voice;
+# plugins/council-privacy keeps each Discord user's DM private.
 distribution_owned:
   - config.yaml
   - skills
   - plugins/council-voices
+  - plugins/council-privacy
   - distribution.yaml
 
 env_requires: []

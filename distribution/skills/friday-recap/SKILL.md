@@ -16,6 +16,11 @@ Runs as a scheduled job; your final reply is the recap. Council voice: Marcus ho
 this week (from the tally in notes/council.md) gets one line. At
 most 12 short lines, no headings.
 
+**A person's private folder.** If the job's prompt names a private folder
+(`notes/people/<platform>-<id>/`), this job is for that one person: use
+only that folder for every note named below, read `profile.md` there
+instead of core memory, and mention nothing about anyone else.
+
 1. **Closed this week**: up to five things you finished (search this week's
    chats and the ledger).
 2. **Saved**: from savings-ledger.md in the notes folder, two lines:

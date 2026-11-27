@@ -1,6 +1,6 @@
 # The Council: Plan
 
-Nov 26, 2026 · @Russ Broomell · branch `romulus-remus` · status: **built on this branch; not yet tried on a real Hermes box**
+Nov 26, 2026 · @Russ Broomell · merged to `main` in #14 · status: **not yet tried on a real Hermes box**
 
 One personal agent, many minds. You message it like any assistant. Behind the reply sits a small council of characters from myth and history, each with a lane. A chair decides who speaks. Most replies are one voice, decisions get two or three, and nobody makes you call them separately.
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The Council: install on a computer that already runs Hermes Agent.
 #
-#   git clone -b romulus-remus https://github.com/russbroomell/personal-agent.git ~/personal-agent
+#   git clone -b main https://github.com/russbroomell/personal-agent.git ~/personal-agent
 #   bash ~/personal-agent/install.sh
 #
 # Assumes Hermes is installed and has a working model (LLM). Run it as the

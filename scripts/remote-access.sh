@@ -14,7 +14,9 @@
 # on each device you'll view from (laptop, phone), signed in to that account.
 set -euo pipefail
 
-PROFILE="${PROFILE:-council}"
+# shellcheck source=lib/profile.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/profile.sh"
+PROFILE="${PROFILE:-$(saved_profile)}"
 # Hermes runs one gateway per machine from its default profile (the "host"),
 # serving every profile. The workspace, its address and its password are read
 # from the host's settings, so they are set on the default profile.
@@ -23,7 +25,7 @@ WEBAPP_PORT="${WEBAPP_PORT:-9120}"
 MC_PORT="${MC_PORT:-8765}"
 WEB_USER="${WEB_USER:-$(id -un)}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
+HH="$(profile_home "$PROFILE")"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }

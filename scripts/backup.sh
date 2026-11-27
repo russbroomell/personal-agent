@@ -6,7 +6,9 @@
 # Schedule nightly at 03:15 with:
 #   (crontab -l 2>/dev/null; echo "15 3 * * * bash $HOME/personal-agent/scripts/backup.sh >/dev/null 2>&1") | crontab -
 set -euo pipefail
-PROFILE="${PROFILE:-council}"
+# shellcheck source=lib/profile.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/profile.sh"
+PROFILE="${PROFILE:-$(saved_profile)}"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 OUT="$HOME/council-backups"
 mkdir -p "$OUT"; chmod 700 "$OUT"

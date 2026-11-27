@@ -20,9 +20,11 @@
 # Then talk to it: voice notes in Telegram, or the live voice conversation
 # button in the workspace (needs the Tailscale HTTPS address). See docs/voice.md.
 set -euo pipefail
-PROFILE="${PROFILE:-council}"
+# shellcheck source=lib/profile.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/profile.sh"
+PROFILE="${PROFILE:-$(saved_profile)}"
 MODE="${1:-}"
-HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
+HH="$(profile_home "$PROFILE")"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 cfg() { hermes -p "$PROFILE" config set "$1" "$2" >/dev/null; }
 

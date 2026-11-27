@@ -1,7 +1,7 @@
 # Council check (on a real bot)
 
 Run after installing, after a Hermes update, and before tagging a release.
-About 20 minutes. Use a test chat (`hermes -p council` in a terminal is
+About 20 minutes. Use a test chat (`hermes` in a terminal is
 fine for the text parts; use Telegram for buttons and voice). Send `/new`
 first so the latest SOUL is loaded. Each row says what to send and what
 should happen. Anything that fails: note the reply, then open an issue.
@@ -84,7 +84,7 @@ fresh profile, send `/new`, then "hi".
 | 7.1 | Marcus opens; six questions, one per message, buttons where offered |
 | 7.2 | A different member reacts to each answer, in one line |
 | 7.3 | Question 3 gets a live Duet/Council and something real is done or started |
-| 7.4 | Five scheduled jobs exist afterwards (`hermes -p council cron list`) |
+| 7.4 | Five scheduled jobs exist afterwards (`hermes cron list`) |
 | 7.5 | Readback is 5 lines or fewer; parked "About you" questions are in onboarding-plan.md |
 | 7.6 | Whole thing takes under about 6 minutes |
 

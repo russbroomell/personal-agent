@@ -4,6 +4,8 @@ Nov 26, 2026 · @Russ Broomell
 
 One assistant, several voices. You message it like any assistant. A chair (Marcus Aurelius) decides, for each message, which members answer. Most replies are one short voice; decisions get two or three, and Marcus always has the last word. You never have to pick who to ask, and you never have to make separate calls.
 
+Commands here assume the Council is in Hermes's default profile (what `install.sh` does unless you pass `--profile`). If you installed it into a named profile, add `-p NAME` after `hermes`, and use `~/.hermes/profiles/NAME/` instead of `~/.hermes/`.
+
 ## The members
 
 | Member | Seat | Leads on | Default |
@@ -113,7 +115,7 @@ Everything else (calendar link, protected time, what counts as urgent, the ten l
 2. Fill in the second line, `Seat: <role> · Tag: <Name>`. The tag is what starts their lines, so keep it short and unique.
 3. Write a Card of 5–8 bullets with a lane nobody seated already owns, and a Full section with a strength dial at 1, 3 and 5.
 4. Add their voices to `members/voices.conf`.
-5. Seat them: `bash ~/.hermes/profiles/council/skills/council/build-soul.sh --seat <slug>`, or tell the bot "seat <name>".
+5. Seat them: `bash ~/.hermes/skills/council/build-soul.sh --seat <slug>`, or tell the bot "seat <name>".
 6. Run `bash tests/lint.sh`. It checks the card size, tag, voices and strength dial, and that the personality file still builds under budget.
 
 Or just tell the bot "add Cleopatra to the council": it asks two questions, writes the file, shows you the card to approve, and seats her. Members based on living people are declined.

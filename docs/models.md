@@ -2,17 +2,19 @@
 
 Nov 3, 2026 · @Russ Broomell
 
-The Council runs on whatever model the person chooses, and they can change it any time without losing memory: send `/model` in Telegram, or run `hermes -p council model` on the server. Everything the agent knows lives in files on the server, not with the model provider.
+The Council runs on whatever model the person chooses, and they can change it any time without losing memory: send `/model` in Telegram, or run `hermes model` on the server. Everything the agent knows lives in files on the server, not with the model provider.
+
+Commands here assume the Council is in Hermes's default profile (what `install.sh` does unless you pass `--profile`). If you installed it into a named profile, add `-p NAME` after `hermes`, and use `~/.hermes/profiles/NAME/` instead of `~/.hermes/`.
 
 ## The options
 
 | Option | How to sign in | Good for | Watch out for |
 | --- | --- | --- | --- |
-| **Grok (xAI) via OAuth** | **xAI Grok OAuth (SuperGrok / Premium+)**, or `hermes -p council auth add xai-oauth --no-browser` (device code, no tunnel) | People with SuperGrok or X Premium+ | xAI limits OAuth API access by tier: a successful login can still return `HTTP 403`. If so, use an API key |
+| **Grok (xAI) via OAuth** | **xAI Grok OAuth (SuperGrok / Premium+)**, or `hermes auth add xai-oauth --no-browser` (device code, no tunnel) | People with SuperGrok or X Premium+ | xAI limits OAuth API access by tier: a successful login can still return `HTTP 403`. If so, use an API key |
 | **Grok via API key** | xAI → `XAI_API_KEY` | Grok without the tier question | Pay-per-use |
 | **OpenAI (ChatGPT/Codex) via OAuth** | **ChatGPT or Codex Subscription** (device code) | People with a ChatGPT plan | Plan quotas for Hermes use aren't documented |
-| **OpenRouter** | `hermes -p council auth add openrouter --type oauth` or API key | Trying many models with one account | Pay-per-use; pick a model with strong tool calling |
-| **Nous Portal** | `hermes -p council model` → Nous Portal (device code) | One subscription for 300+ models plus web search, browser and TTS tools | Turn on Privacy Mode in the Portal before using it for personal data |
+| **OpenRouter** | `hermes auth add openrouter --type oauth` or API key | Trying many models with one account | Pay-per-use; pick a model with strong tool calling |
+| **Nous Portal** | `hermes model` → Nous Portal (device code) | One subscription for 300+ models plus web search, browser and TTS tools | Turn on Privacy Mode in the Portal before using it for personal data |
 | **Your own model** (Ollama, vLLM, LM Studio, llama.cpp server, any OpenAI-compatible endpoint) | **Custom endpoint**: base URL, optional key, model name | Maximum privacy: prompts never leave hardware you control | Needs a model strong enough for tool calling (see below), and the server must be able to reach it |
 
 **Default: Grok (`grok-4.6`).** Claude is not an option for this build. Agent work (multi-step errands, browser, scheduling) needs strong tool calling. Hermes's docs warn that small local models (roughly under 30B parameters) often *say* they saved or did something without actually doing it.
@@ -22,21 +24,21 @@ The Council runs on whatever model the person chooses, and they can change it an
 Sign in to as many as you like; `/model` in Telegram then shows a button menu of providers and models. That's a good demo moment: switch from Grok to another model mid-conversation, and the agent still remembers everything.
 
 ```bash
-hermes -p council auth add xai-oauth --no-browser       # Grok (SuperGrok / Premium+)
-hermes -p council auth add openrouter --type oauth      # a second option, many models
+hermes auth add xai-oauth --no-browser       # Grok (SuperGrok / Premium+)
+hermes auth add openrouter --type oauth      # a second option, many models
 ```
 
 **Scheduled jobs** (brief, recap, distill) follow the main model unless you pin them. To keep them on a cheaper model regardless of what you chat with, set one for the whole set of jobs:
 
 ```bash
-hermes -p council config set cron.model <model-name>
+hermes config set cron.model <model-name>
 ```
 
 ## When the prospect brings their own LLM
 
 Three ways, from simplest to most private.
 
-**1. Their API key, on a demo agent.** Good for "try it with your model". Ask them to make a **temporary key with a small spend cap**, and enter it on the server with `hermes -p council model`, never in Telegram. Delete it afterwards with `hermes -p council auth remove <provider>` (see `hermes auth --help`). The cleaner version: they run their own agent, which is the whole point of the product.
+**1. Their API key, on a demo agent.** Good for "try it with your model". Ask them to make a **temporary key with a small spend cap**, and enter it on the server with `hermes model`, never in Telegram. Delete it afterwards with `hermes auth remove <provider>` (see `hermes auth --help`). The cleaner version: they run their own agent, which is the whole point of the product.
 
 **2. Their hosted endpoint.** Any OpenAI-compatible URL (a company vLLM server, Azure, Bedrock and so on). Pick **Custom endpoint** and enter the base URL, key and model name. The server must be able to reach it over the internet or a VPN.
 
@@ -47,7 +49,7 @@ Three ways, from simplest to most private.
 ssh -N -R 11434:127.0.0.1:11434 agent@YOUR_SERVER_IP
 ```
 
-Then on the server: `hermes -p council model` → **Custom endpoint** → `http://127.0.0.1:11434/v1`, no key, and the model name (for example `qwen3:32b`). The agent now thinks with a model on their desk while its memory stays on the server. This makes a great privacy demo, but it only works while their machine is on and the tunnel is up. For daily use, Tailscale between the two machines is sturdier.
+Then on the server: `hermes model` → **Custom endpoint** → `http://127.0.0.1:11434/v1`, no key, and the model name (for example `qwen3:32b`). The agent now thinks with a model on their desk while its memory stays on the server. This makes a great privacy demo, but it only works while their machine is on and the tunnel is up. For daily use, Tailscale between the two machines is sturdier.
 
 **Running the model on the VPS itself isn't realistic at 4 GB.** Even the smallest useful local models need more memory than is left once the gateway and the bot's browser are running. For an all-local setup, the right home is a mini PC or a Mac with 32–64 GB of memory: install Hermes there, then use Hermes's one-click local models (llama.cpp) and move the agent over with `scripts/move-agent.sh`.
 

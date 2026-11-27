@@ -4,14 +4,17 @@
 #   git clone -b main https://github.com/russbroomell/personal-agent.git ~/personal-agent
 #   bash ~/personal-agent/install.sh
 #
-# Assumes Hermes is installed and has a working model (LLM). Run it as the
-# user Hermes runs as (root is fine). Safe to run again: it refreshes what's
-# there and never touches memory, notes, chats or keys.
+# Assumes Hermes is installed and has a working model (LLM). By default the
+# council moves into Hermes's default profile, so the model and Telegram bot
+# you set up already are used as they are (it backs the profile up first).
+# Run it as the user Hermes runs as (root is fine). Safe to run again: it
+# refreshes what's there and never touches memory, notes, chats or keys.
 #
 # It asks yes/no before each optional step (Enter = recommended answer).
 # Options:
 #   --yes                     take every recommended answer, no questions
-#   --profile NAME            profile to install as (default: council)
+#   --profile NAME            profile to install into (default: Hermes's own default
+#                             profile, keeping its model and Telegram; or a new one, e.g. council)
 #   --migrate-from NAME       copy memory and notes from another profile (e.g. sidekick)
 #   --replace NAME            replace that profile (e.g. sidekick): back it up, stop its
 #                             auto-update and Memory Card, copy its model, memory and notes,
@@ -30,13 +33,14 @@
 #   7. Health check, including a test question to the council
 set -euo pipefail
 
-PROFILE="${PROFILE:-council}"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/profile.sh
+source "$REPO_DIR/scripts/lib/profile.sh"
+PROFILE="${PROFILE:-default}"
 MIGRATE=""; REPLACE=""; VOICE=""; UPDATE=1; CHECK=1
 MC_PORT="${MC_PORT:-8765}"
 WEBAPP_PORT="${WEBAPP_PORT:-9120}"
 HOST_PROFILE="default"   # Hermes runs one gateway per machine, from its default profile
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HERMES_ROOT="${HERMES_HOME:-$HOME/.hermes}"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 
 while [[ $# -gt 0 ]]; do
@@ -53,13 +57,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ "$PROFILE" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo "--profile: lower-case letters, digits, - and _ only." >&2; exit 1; }
-HH="$HERMES_ROOT/profiles/$PROFILE"
+HH="$(profile_home "$PROFILE")"
 if [[ -n "$REPLACE" ]]; then
   [[ "$REPLACE" =~ ^[a-z0-9][a-z0-9_-]*$ && "$REPLACE" != "$PROFILE" && "$REPLACE" != default ]] \
     || { echo "--replace: name another profile, like sidekick (not default or $PROFILE)." >&2; exit 1; }
-  [[ -d "$HERMES_ROOT/profiles/$REPLACE" ]] || { echo "--replace: no profile at $HERMES_ROOT/profiles/$REPLACE" >&2; exit 1; }
+  if [[ ! -d "$HERMES_ROOT/profiles/$REPLACE" ]]; then
+    echo "--replace: no profile at $HERMES_ROOT/profiles/$REPLACE." >&2
+    echo "Profiles here: $(ls "$HERMES_ROOT/profiles" 2>/dev/null | tr '\n' ' ')(plus default, in $HERMES_ROOT)" >&2
+    echo "Nothing to replace? Run without --replace; the council moves into the default profile." >&2
+    exit 1
+  fi
 fi
-OLD_HH="$HERMES_ROOT/profiles/${REPLACE:-none}"
+OLD_HH="$(profile_home "${REPLACE:-none}")"
 
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 ok()   { printf '  \033[1;32m✓\033[0m %s\n' "$*"; }
@@ -125,10 +134,11 @@ model_of() { hermes -p "$1" config get model.provider 2>/dev/null | tail -1; }
 SRC_MODEL=""; SRC_PROF="$HOST_PROFILE"; SRC_HOME="$HERMES_ROOT"
 if [[ -n "$MIGRATE" && "$MIGRATE" != default ]]; then
   SRC_MODEL="$(model_of "$MIGRATE" || true)"
-  if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then SRC_PROF="$MIGRATE"; SRC_HOME="$HERMES_ROOT/profiles/$MIGRATE"; else SRC_MODEL=""; fi
+  if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then SRC_PROF="$MIGRATE"; SRC_HOME="$(profile_home "$MIGRATE")"; else SRC_MODEL=""; fi
 fi
 [[ -n "$SRC_MODEL" ]] || SRC_MODEL="$(model_of "$HOST_PROFILE" || true)"
-if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then ok "existing model setup: $SRC_MODEL ($SRC_PROF profile)"
+if [[ "$PROFILE" == default && "$SRC_PROF" == default && -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then ok "model: $SRC_MODEL (already set up on the default profile; the council uses it as is)"
+elif [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]]; then ok "existing model setup: $SRC_MODEL ($SRC_PROF profile)"
 else echo "  No model set up yet; you'll pick one in step 2."; fi
 
 # ---------------------------------------------- replacing an older profile
@@ -161,17 +171,29 @@ fi
 
 # ---------------------------------------------------------- 2. profile
 say "Step 2 of 7: the '$PROFILE' profile"
-if [[ -f "$HH/distribution.yaml" ]]; then
-  echo "Updating it (memory, notes, chats, model and keys are kept)..."
-  hermes profile update "$PROFILE" -y
-else
-  hermes profile install "$REPO_DIR/distribution" --name "$PROFILE" --alias -y
+if council_installed "$PROFILE"; then
+  echo "Updating the council there (memory, notes, chats, model and keys are kept)..."
+elif [[ "$PROFILE" == default ]]; then
+  # First time in the default profile: it already holds a setup (model,
+  # Telegram, maybe its own personality), so back it up before changing it.
+  BK="$HOME/council-backups"; mkdir -p "$BK"; chmod 700 "$BK"
+  if hermes -p default backup -o "$BK/hermes-backup-default-before-council-$(date +%Y%m%d-%H%M%S).zip" -k 14 >/dev/null 2>&1; then
+    chmod 600 "$BK"/*.zip 2>/dev/null || true; ok "backed up the default profile to $BK"
+  else
+    warn "Couldn't back up the default profile with hermes backup."
+    ask "Carry on without a backup? (your config, keys and memory aren't replaced, only added to)" Y \
+      || die "Stopped. Back it up yourself (hermes backup), then re-run."
+  fi
+  echo "Adding the council's skills, voice plugin and settings to the default profile."
+  echo "Your model, keys and Telegram setup stay as they are."
 fi
-[[ -d "$HH" ]] || die "Profile folder $HH wasn't created; see the output above."
+sync_distribution "$PROFILE" "$REPO_DIR"
+[[ -d "$HH/skills/council" ]] || die "The council's skills didn't land in $HH/skills; see the output above."
+save_profile "$PROFILE"
 
 # The model: reuse the one already set up, so there's nothing to re-enter.
 if [[ "$(model_of "$PROFILE" || true)" =~ ^(|None)$ ]]; then
-  if [[ -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]] && ask "Use your existing model setup ($SRC_MODEL, from the $SRC_PROF profile) for the council?" Y; then
+  if [[ "$SRC_PROF" != "$PROFILE" && -n "$SRC_MODEL" && "$SRC_MODEL" != "None" ]] && ask "Use your existing model setup ($SRC_MODEL, from the $SRC_PROF profile) for the council?" Y; then
     # Copy the model block of config.yaml plus the sign-in files, never overwriting.
     python3 - "$SRC_HOME/config.yaml" "$HH/config.yaml" <<'PY'
 import sys, re
@@ -201,13 +223,14 @@ PY
     else warn "No terminal to ask on; later: hermes -p $PROFILE model"; fi
   fi
 fi
-M="$(model_of "$PROFILE" || true)"; [[ -n "$M" && "$M" != "None" ]] && ok "model: $M $(hermes -p "$PROFILE" config get model.default 2>/dev/null | tail -1)"
-hermes -p "$PROFILE" config set agent.reasoning_effort low >/dev/null || true
-hermes -p "$PROFILE" config set agent.disabled_toolsets '[]' >/dev/null || true
+M="$(model_of "$PROFILE" || true)"
+MD="$(hermes -p "$PROFILE" config get model.default 2>/dev/null | tail -1 || true)"; [[ "$MD" == None ]] && MD=""
+[[ -n "$M" && "$M" != "None" ]] && ok "model: $M${MD:+, $MD}"
 
 # Bring memory and notes over from another profile (chosen in step 1).
 if [[ -n "$MIGRATE" ]]; then
-  SRC="$HERMES_ROOT/profiles/$MIGRATE"; [[ "$MIGRATE" == default ]] && SRC="$HERMES_ROOT"
+  SRC="$(profile_home "$MIGRATE")"
+  [[ "$MIGRATE" != "$PROFILE" ]] || die "--migrate-from: that's the profile the council is going into."
   [[ -d "$SRC" ]] || die "--migrate-from: no profile at $SRC"
   mkdir -p "$HH/memories" "$HH/notes"
   [[ -s "$HH/memories/USER.md" ]] && cp -a "$HH/memories" "$HH/memories.before-migrate.$(date +%s)"

@@ -8,10 +8,12 @@
 # Paste the output when asking for help: it contains no passwords or tokens.
 set -uo pipefail
 
-PROFILE="${PROFILE:-council}"
+# shellcheck source=lib/profile.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/profile.sh"
+PROFILE="${PROFILE:-$(saved_profile)}"
 HOST_PROFILE="default"
 WEBAPP_PORT="${WEBAPP_PORT:-9120}"
-HH="${HERMES_HOME:-$HOME/.hermes}/profiles/$PROFILE"
+HH="$(profile_home "$PROFILE")"
 export PATH="$HOME/.local/bin:$HOME/.hermes/bin:$PATH"
 SPEED=0; [[ "${1:-}" == "--speed" ]] && SPEED=1
 
@@ -48,7 +50,7 @@ if [[ -n "$HAVE_V" && -n "$TESTED_V" && "$HAVE_V" != "$TESTED_V" ]]; then
     meh "Hermes $HAVE_V is older than tested ($TESTED_V)"; fix "hermes update --yes && hermes -p default gateway restart"
   fi
 fi
-[[ -d "$HH" ]] && ok "profile '$PROFILE' installed" || { bad "profile '$PROFILE' missing"; fix "bash ~/personal-agent/install.sh"; }
+council_installed "$PROFILE" && ok "the council is installed in the '$PROFILE' profile ($HH)" || { bad "the council isn't installed in the '$PROFILE' profile"; fix "bash ~/personal-agent/install.sh"; }
 
 head_ "Gateway (the 24/7 service)"
 if systemctl --user cat "hermes-gateway-$PROFILE.service" >/dev/null 2>&1; then
@@ -113,7 +115,7 @@ for t in clarify cronjob delegation memory; do
   grep -qw "$t" <<<"$DIS" && { bad "toolset '$t' is turned off; the council needs it"; fix "hermes -p $PROFILE config set agent.disabled_toolsets '[]'  (then restart)"; }
 done
 PLUG="$(timeout 20 hermes -p "$PROFILE" plugins list 2>/dev/null | grep -i council-voices || true)"
-if [[ -z "$PLUG" ]]; then bad "council-voices plugin not found"; fix "hermes profile update $PROFILE -y && hermes -p $PROFILE plugins enable council-voices"
+if [[ -z "$PLUG" ]]; then bad "council-voices plugin not found"; fix "bash ~/personal-agent/scripts/update.sh && hermes -p $PROFILE plugins enable council-voices"
 elif grep -qiE 'disabled|off|no\b' <<<"$PLUG"; then bad "council-voices plugin is off"; fix "hermes -p $PROFILE plugins enable council-voices && hermes -p default gateway restart"
 else ok "council-voices plugin: $(tr -s ' ' <<<"$PLUG" | cut -c1-80)"; fi
 TTS="$(cfg "$PROFILE" tts.provider)"; ENGINE="$(cfg "$PROFILE" tts.council.engine)"

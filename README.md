@@ -15,7 +15,7 @@ Send that as a voice note and the answer comes back as audio, with each member i
 
 **Made for Discord.** Everyone who DMs the bot gets their own private council: their own first chat, morning brief and private notebook. In your server's public channels it chats with whoever's there, no @mention needed, and never repeats anything from anyone's DMs. Telegram works too, for one person. See [docs/discord.md](docs/discord.md).
 
-Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. The earlier six-character Sidekick is in the git history, and stays on the `stable` branch until the first Council release.
+Built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) by Nous Research. The earlier six-character Sidekick is in the git history (up to `v1.0.0`, when `stable` moved to the Council).
 
 ## The council
 
@@ -105,7 +105,7 @@ bash ~/personal-agent/install.sh --replace sidekick
 
 `--replace sidekick`:
 - backs up the Sidekick profile to `~/sidekick-backups`;
-- stops Sidekick's nightly auto-update (which would switch the copy back to `stable`) and its Memory Card page;
+- stops Sidekick's nightly auto-update (its old updater would fight the upgrade) and its Memory Card page;
 - copies its memory and notes, and its model setup if the default profile has none;
 - moves its Discord and Telegram bots to the Council, so you keep the same chats, unless the default profile already has a bot on that app;
 - offers to rerun the Council's 5-minute first chat, which also sets up the Council's brief and weekly jobs.
@@ -124,7 +124,7 @@ Starting from a bare server? Install Hermes first ([Hermes docs](https://hermes-
 
 | What | How |
 | --- | --- |
-| Nightly auto-update | `scripts/auto-update.sh enable`. It backs up the profile, fast-forwards this repo on the branch you installed from, updates Hermes only to the tested version in `HERMES_VERSION`, refreshes the Council's skills and plugin (removing any a newer version dropped), rebuilds the personality with your seats, restarts, and rolls back if anything fails. `status` / `run` / `disable`. Cloned from `main`, it follows `main` and gets every change as it lands. Don't switch it to `--channel stable` until the first Council release: `stable` still holds the old Sidekick |
+| Nightly auto-update | `scripts/auto-update.sh enable`. It backs up the profile, fast-forwards this repo on the branch you installed from, updates Hermes only to the tested version in `HERMES_VERSION`, refreshes the Council's skills and plugin (removing any a newer version dropped), rebuilds the personality with your seats, restarts, and rolls back if anything fails. `status` / `run` / `disable`. Cloned from `main`, it follows `main` and gets every change as it lands. For tested releases only, use `--channel stable` (clone with `-b stable`, or run `auto-update.sh enable --channel stable`) |
 | Update by hand | `scripts/update.sh` |
 | Health check | `scripts/check.sh` (`--speed` times a reply and asks the council a test decision) |
 | Backups | `scripts/backup.sh`: nightly with auto-update, newest 14 kept in `~/council-backups` |

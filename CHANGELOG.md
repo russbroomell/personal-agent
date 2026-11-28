@@ -4,11 +4,18 @@ Servers on auto-update follow the `stable` branch, which only moves when a
 release is published (`scripts/release.sh`). Each release names the Hermes
 Agent version it was tested with (file `HERMES_VERSION`).
 
-## 1.0.0-council (unreleased, on `main`)
+## 1.0.0 (2026-11-28)
 
-A new version: the Council. Tested so far with lint, unit tests and a
-simulated install; check it on a real Hermes 0.23.4 box with
-`tests/council-check.md` before release.
+The Council: a new version that replaces the six-character Sidekick.
+Tested with Hermes Agent 0.23.4: lint, unit tests for both plugins,
+simulated installs, and an install on a real 4 GB OVH VPS (Ubuntu). The
+full behaviour checklist (`tests/council-check.md`) is still to be run on
+a live bot.
+
+**Upgrading a Sidekick server:** it won't switch by itself. Its old
+updater tries this release, can't rebuild the old characters, and rolls
+back. Run the upgrade once, by hand (README, "Upgrading from Sidekick"):
+`install.sh --replace sidekick`.
 
 - **The council replaces the six characters.** Nine seated members (Marcus
   Aurelius chairs; Romulus, Remus, Odysseus, Māui, Newton, Feynman,

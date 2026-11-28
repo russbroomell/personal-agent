@@ -90,3 +90,78 @@ free_port() {
   sleep 2
   return $rc
 }
+
+# ------------------------------------------------------------- leftovers
+# Things from an earlier install that keep running after a reinstall, and
+# that the gateway can't see or stop: another user's Hermes, and services
+# whose profile folder is gone.
+
+# True when anything listens on TCP port $1, whoever owns it (ss without -p
+# shows other users' sockets too, just not their PIDs).
+port_listening() {
+  if command -v ss >/dev/null; then
+    [[ -n "$(ss -Hltn "sport = :$1" 2>/dev/null)" ]]; return
+  fi
+  python3 - "$1" <<'PY3'
+import sys
+port = int(sys.argv[1])
+for f in ("/proc/net/tcp", "/proc/net/tcp6"):
+    try:
+        for line in open(f).read().splitlines()[1:]:
+            p = line.split()
+            if p[3] == "0A" and int(p[1].rsplit(":", 1)[1], 16) == port:
+                sys.exit(0)
+    except OSError:
+        pass
+sys.exit(1)
+PY3
+}
+
+# True when port $1 is held by a process this user can't see (another user's).
+port_held_by_other_user() {
+  port_listening "$1" && [[ -z "$(port_pids "$1")" ]]
+}
+
+# "user pid hermes-home" for every Hermes gateway run by another user.
+other_user_gateways() {
+  local me; me="$(id -un)"
+  ps -eo user=,pid=,args= 2>/dev/null | while read -r user pid args; do
+    [[ "$pid" =~ ^[0-9]+$ && "$user" != "$me" ]] || continue
+    # The process itself is Python running Hermes (not a shell that mentions it).
+    [[ "${args%% *}" == *python* && "$args" == *hermes* && "$args" == *"gateway run"* ]] || continue
+    home="$(grep -oE '/[^ ]*/\.hermes' <<<"$args" | head -1)"
+    printf '%s %s %s\n' "$user" "$pid" "${home:-unknown}"
+  done
+}
+
+# "unit reason" for this user's council/sidekick services that point at a
+# profile folder that no longer exists, or that an older version left behind.
+stale_council_units() {  # stale_council_units <current profile home>
+  local current="$1" dir="$HOME/.config/systemd/user" f unit home
+  [[ -d "$dir" ]] || return 0
+  for f in "$dir"/*memory-card*.service; do
+    [[ -f "$f" ]] || continue
+    unit="$(basename "$f")"
+    home="$(cat "$f" "$f.d"/*.conf 2>/dev/null | grep -oE -- '--home [^ ]+' | tail -1 | cut -d' ' -f2)"
+    if [[ -n "$home" && ! -d "$home" ]]; then
+      echo "$unit its profile folder $home is gone"
+    elif [[ -n "$home" && "$(realpath -m "$home")" != "$(realpath -m "$current")" ]]; then
+      echo "$unit it serves $home, not the council's profile"
+    fi
+  done
+  for unit in sidekick-update.timer sidekick-update.service; do
+    [[ -f "$dir/$unit" ]] && echo "$unit Sidekick's old nightly updater (the council uses council-update)"
+  done
+  return 0
+}
+
+# "pid home" for Memory Card pages running for a profile folder that's gone.
+orphan_memory_cards() {
+  ps -eo pid=,user=,args= 2>/dev/null | while read -r pid user args; do
+    [[ "$pid" =~ ^[0-9]+$ && "$user" == "$(id -un)" ]] || continue
+    [[ "${args%% *}" == *python* && "$args" == *memory-card/server.py* ]] || continue
+    home="$(grep -oE -- '--home [^ ]+' <<<"$args" | cut -d' ' -f2)"
+    [[ -n "$home" && ! -d "$home" ]] && printf '%s %s\n' "$pid" "$home"
+  done
+  return 0
+}

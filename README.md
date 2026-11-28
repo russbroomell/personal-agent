@@ -126,7 +126,7 @@ Starting from a bare server? Install Hermes first ([Hermes docs](https://hermes-
 | --- | --- |
 | Nightly auto-update | `scripts/auto-update.sh enable`. It backs up the profile, fast-forwards this repo on the branch you installed from, updates Hermes only to the tested version in `HERMES_VERSION`, refreshes the Council's skills and plugin (removing any a newer version dropped), rebuilds the personality with your seats, restarts, and rolls back if anything fails. `status` / `run` / `disable`. Cloned from `main`, it follows `main` and gets every change as it lands. For tested releases only, use `--channel stable` (clone with `-b stable`, or run `auto-update.sh enable --channel stable`) |
 | Update by hand | `scripts/update.sh` |
-| Health check | `scripts/check.sh` (`--speed` times a reply and asks the council a test decision) |
+| Health check | `scripts/check.sh` (`--speed` times a reply and asks the council a test decision). It also finds leftovers from earlier installs: another user's Hermes, old Sidekick services, ports held by someone else |
 | Backups | `scripts/backup.sh`: nightly with auto-update, newest 14 kept in `~/council-backups` |
 | Your choices survive updates | Seats and name live in `council.conf`; memory, notes, keys and your own settings are never replaced. Updates only touch the Council's skills and plugin (listed in `council-files.txt`) and its few settings |
 | Checks on every change | `tests/lint.sh` (GitHub runs it on each pull request): shell, skills, config, every member's card, tag, voices and strength dial, the personality budget and guardrails, plugin unit tests |

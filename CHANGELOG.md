@@ -4,6 +4,16 @@ Servers on auto-update follow the `stable` branch, which only moves when a
 release is published (`scripts/release.sh`). Each release names the Hermes
 Agent version it was tested with (file `HERMES_VERSION`).
 
+## Unreleased
+
+- Health check: a new "Leftovers from earlier installs" section. It flags
+  a Hermes gateway run by another user (for example an old install under
+  `ubuntu`, which can hold the workspace port and answer the same bot),
+  ports held by another user's process, old Sidekick services (a Memory
+  Card page for a deleted profile, the old nightly updater), Memory Card
+  pages still running for a folder that's gone, and the council's own
+  Memory Card page not running. Each comes with the command to fix it.
+
 ## 1.0.0 (2026-11-28)
 
 The Council: a new version that replaces the six-character Sidekick.

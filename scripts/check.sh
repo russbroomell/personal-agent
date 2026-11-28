@@ -153,6 +153,44 @@ if grep -qsE '^DISCORD_BOT_TOKEN=.' "$HH/.env"; then
   echo "  private folders: $PEOPLE (one per person who has DMed it)"
 fi
 
+head_ "Leftovers from earlier installs"
+# shellcheck source=lib/port.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib/port.sh"
+MC_PORT="${MC_PORT:-8765}"
+LEFT=0
+while read -r ouser opid ohome; do
+  [[ -n "$ouser" ]] || continue
+  LEFT=1
+  bad "another Hermes is running as user '$ouser' (PID $opid, $ohome). It can hold the workspace port and answer your bot's messages too"
+  fix "sudo systemctl --user -M $ouser@ disable --now hermes-gateway.service   (keeps its files; delete $ohome later if you don't need it)"
+done < <(other_user_gateways)
+while read -r unit reason; do
+  [[ -n "$unit" ]] || continue
+  LEFT=1
+  bad "old service $unit: $reason"
+  fix "systemctl --user disable --now $unit; rm -rf ~/.config/systemd/user/$unit ~/.config/systemd/user/$unit.d; systemctl --user daemon-reload"
+done < <(stale_council_units "$HH")
+while read -r opid ohome; do
+  [[ -n "$opid" ]] || continue
+  LEFT=1
+  bad "a Memory Card page is still running for $ohome, which no longer exists (PID $opid); it holds its port"
+  fix "kill $opid   (and remove its service above, if one is listed, so it doesn't come back at boot)"
+done < <(orphan_memory_cards)
+for port in "$WEBAPP_PORT" "$MC_PORT"; do
+  if port_held_by_other_user "$port"; then
+    LEFT=1
+    bad "port $port is held by a process another user owns, so yours can't use it"
+    fix "see which: sudo ss -ltnp 'sport = :$port'   (often another user's Hermes, listed above)"
+  fi
+done
+if systemctl --user cat "council-memory-card-$PROFILE.service" >/dev/null 2>&1 \
+   && ! systemctl --user is-active --quiet "council-memory-card-$PROFILE.service"; then
+  LEFT=1
+  bad "the council's Memory Card page isn't running"
+  fix "systemctl --user restart council-memory-card-$PROFILE.service; journalctl --user -u council-memory-card-$PROFILE -n 20"
+fi
+[[ $LEFT -eq 0 ]] && ok "none found (no other user's Hermes, no old services, ports free for yours)"
+
 head_ "Workspace (bot screen in a browser)"
 [[ "$(cfg "$HOST_PROFILE" webapp.enabled)" == "True" || "$(cfg "$HOST_PROFILE" webapp.enabled)" == "true" ]] \
   && ok "turned on" || { meh "turned off (optional: needed for live voice and watching the bot's browser)"; fix "bash ~/personal-agent/install.sh  (answer yes to the workspace), or remote-access.sh"; }
@@ -168,13 +206,15 @@ case "$CODE" in
 esac
 STATUS="$(timeout 15 hermes -p "$HOST_PROFILE" webapp --status 2>&1 | head -3)"
 [[ -n "$STATUS" ]] && sed 's/^/  /' <<<"$STATUS"
-# shellcheck source=lib/port.sh
-source "$(dirname "${BASH_SOURCE[0]}")/lib/port.sh"
 STRAYS="$(port_strays "$WEBAPP_PORT")"
 if grep -qi "unavailable\|address already in use" <<<"$STATUS" || [[ -n "$STRAYS" ]]; then
   bad "something other than the gateway holds port $WEBAPP_PORT, so the real workspace can't start"
   [[ -n "$STRAYS" ]] && sed 's/^/      holding it: /' <<<"$STRAYS"
-  fix "bash ~/personal-agent/scripts/remote-access.sh  (stops the leftover and restarts)"
+  if [[ -z "$STRAYS" ]] && port_held_by_other_user "$WEBAPP_PORT"; then
+    fix "another user's process holds it: see 'Leftovers' above, then: hermes gateway restart"
+  else
+    fix "bash ~/personal-agent/scripts/remote-access.sh  (stops the leftover and restarts)"
+  fi
 fi
 if command -v tailscale >/dev/null; then
   tailscale serve status 2>/dev/null | grep -q "$WEBAPP_PORT" && ok "Tailscale forwards https to port $WEBAPP_PORT" \
